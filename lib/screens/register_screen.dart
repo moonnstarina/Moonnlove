@@ -82,9 +82,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
           child: SafeArea(
+            top: false,
             bottom: false,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(30, 20, 30, 40),
+              padding: const EdgeInsets.fromLTRB(30, 40, 30, 40),
               child: Column(
                 children: [
                   const SizedBox(height: 30),
