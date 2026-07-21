@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "654504161698",
+    "project_id": "moonnlove-a78ca",
+    "storage_bucket": "moonnlove-a78ca.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:654504161698:android:0a615cd8450fee1ca982fb",
+        "android_client_info": {
+          "package_name": "com.example.moonnlove"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBNINZlibUf5jhpYZ8io_MyWfsVnFyXaq0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:654504161698:android:6b902a5846117b32a982fb",
+        "android_client_info": {
+          "package_name": "com.moonnstar.moonnlove"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBNINZlibUf5jhpYZ8io_MyWfsVnFyXaq0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
