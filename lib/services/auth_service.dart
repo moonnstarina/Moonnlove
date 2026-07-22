@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final DatabaseReference _db = FirebaseDatabase.instance.ref();
 
   User? get currentUser => _auth.currentUser;
   Stream<User?> get authStateChanges => _auth.authStateChanges();
@@ -14,7 +14,7 @@ class AuthService {
       password: password,
     );
 
-    await _firestore.collection('users').doc(result.user!.uid).set({
+    await _db.child('users/${result.user!.uid}').set({
       'uid': result.user!.uid,
       'name': name,
       'email': email,
@@ -22,7 +22,7 @@ class AuthService {
       'partner_uid': '',
       'theme_primary_color': 0xFFE91E63,
       'theme_mode': 'light',
-      'created_at': FieldValue.serverTimestamp(),
+      'created_at': ServerValue.timestamp,
     });
 
     return result;
@@ -44,8 +44,10 @@ class AuthService {
   }
 
   Future<Map<String, dynamic>?> getUserData(String uid) async {
-    DocumentSnapshot doc =
-        await _firestore.collection('users').doc(uid).get();
-    return doc.data() as Map<String, dynamic>?;
+    DatabaseEvent event = await _db.child('users/$uid').once();
+    if (event.snapshot.value != null) {
+      return Map<String, dynamic>.from(event.snapshot.value as Map);
+    }
+    return null;
   }
 }

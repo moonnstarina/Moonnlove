@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/auth_service.dart';
@@ -15,6 +15,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final _messageController = TextEditingController();
   final _authService = AuthService();
   final _scrollController = ScrollController();
+  final DatabaseReference _chatRef = FirebaseDatabase.instance.ref().child('chats');
 
   Future<void> _sendMessage() async {
     if (_messageController.text.trim().isEmpty) return;
@@ -22,11 +23,11 @@ class _ChatScreenState extends State<ChatScreen> {
     final user = _authService.currentUser;
     if (user == null) return;
 
-    await FirebaseFirestore.instance.collection('chats').add({
+    await _chatRef.push().set({
       'sender_uid': user.uid,
       'message': _messageController.text.trim(),
       'type': 'text',
-      'timestamp': FieldValue.serverTimestamp(),
+      'timestamp': ServerValue.timestamp,
       'is_read': false,
     });
 
@@ -70,19 +71,10 @@ class _ChatScreenState extends State<ChatScreen> {
       body: Column(
         children: [
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('chats')
-                  .orderBy('timestamp', descending: true)
-                  .snapshots(),
+            child: StreamBuilder<DatabaseEvent>(
+              stream: _chatRef.orderByChild('timestamp').onValue,
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                final messages = snapshot.data!.docs;
-
-                if (messages.isEmpty) {
+                if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
                   return const Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -98,15 +90,23 @@ class _ChatScreenState extends State<ChatScreen> {
                   );
                 }
 
+                Map<dynamic, dynamic> data = snapshot.data!.snapshot.value as Map;
+                List<Map<String, dynamic>> messages = [];
+
+                data.forEach((key, value) {
+                  messages.add(Map<String, dynamic>.from(value));
+                });
+
+                messages.sort((a, b) => (b['timestamp'] ?? 0).compareTo(a['timestamp'] ?? 0));
+
                 return ListView.builder(
                   controller: _scrollController,
                   reverse: true,
                   padding: const EdgeInsets.all(15),
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
-                    final msg = messages[index].data() as Map<String, dynamic>;
+                    final msg = messages[index];
                     final isMe = msg['sender_uid'] == user?.uid;
-
                     return _buildMessageBubble(msg, isMe, primaryColor);
                   },
                 );
@@ -209,9 +209,15 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  String _formatTime(Timestamp? timestamp) {
+  String _formatTime(dynamic timestamp) {
     if (timestamp == null) return '';
-    final date = timestamp.toDate();
+    int time;
+    if (timestamp is int) {
+      time = timestamp;
+    } else {
+      return '';
+    }
+    final date = DateTime.fromMillisecondsSinceEpoch(time);
     return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 }
