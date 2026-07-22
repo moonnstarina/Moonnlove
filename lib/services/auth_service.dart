@@ -14,16 +14,21 @@ class AuthService {
       password: password,
     );
 
-    await _db.child('users/${result.user!.uid}').set({
-      'uid': result.user!.uid,
-      'name': name,
-      'email': email,
-      'photo_url': '',
-      'partner_uid': '',
-      'theme_primary_color': 0xFFE91E63,
-      'theme_mode': 'light',
-      'created_at': ServerValue.timestamp,
-    });
+    try {
+      await _db.child('users/${result.user!.uid}').set({
+        'uid': result.user!.uid,
+        'name': name,
+        'email': email,
+        'photo_url': '',
+        'partner_uid': '',
+        'theme_primary_color': 0xFFE91E63,
+        'theme_mode': 'light',
+        'created_at': DateTime.now().millisecondsSinceEpoch,
+      });
+    } catch (e) {
+      // Data user gagal disimpan, tapi auth udah jalan
+      // Tetap lanjut, user bisa login
+    }
 
     return result;
   }
@@ -44,9 +49,13 @@ class AuthService {
   }
 
   Future<Map<String, dynamic>?> getUserData(String uid) async {
-    DatabaseEvent event = await _db.child('users/$uid').once();
-    if (event.snapshot.value != null) {
-      return Map<String, dynamic>.from(event.snapshot.value as Map);
+    try {
+      DatabaseEvent event = await _db.child('users/$uid').once();
+      if (event.snapshot.value != null) {
+        return Map<String, dynamic>.from(event.snapshot.value as Map);
+      }
+    } catch (e) {
+      // Gagal baca data
     }
     return null;
   }
