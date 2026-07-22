@@ -24,10 +24,11 @@ class AuthService {
         'theme_primary_color': 0xFFE91E63,
         'theme_mode': 'light',
         'created_at': DateTime.now().millisecondsSinceEpoch,
+      }).timeout(const Duration(seconds: 5), onTimeout: () {
+        // Timeout, skip simpan data
       });
     } catch (e) {
-      // Data user gagal disimpan, tapi auth udah jalan
-      // Tetap lanjut, user bisa login
+      // Gagal simpan, skip
     }
 
     return result;
