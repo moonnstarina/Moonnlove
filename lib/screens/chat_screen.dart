@@ -203,6 +203,45 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  Widget _buildNotPaired(Color primaryColor) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(30),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.favorite_border, size: 60, color: Colors.grey),
+            const SizedBox(height: 15),
+            const Text(
+              'Belum terhubung dengan pasangan',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Hubungkan pasangan dulu biar bisa chat',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: () => Navigator.pushNamed(context, '/partner'),
+              icon: const Icon(Icons.person_add, size: 18),
+              label: const Text('Hubungkan Pasangan'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildMessageBubble(
     Map<String, dynamic> msg,
     bool isMe,
