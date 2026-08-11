@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:provider/provider.dart';
@@ -35,6 +36,7 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _loading = true;
   bool _inputFocused = false;
   DatabaseReference? _chatRef;
+  StreamSubscription<DatabaseEvent>? _partnerListener;
 
   @override
   void initState() {
@@ -49,6 +51,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    _partnerListener?.cancel();
     _messageController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
@@ -59,6 +62,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final coupleId = await _partnerService.getCoupleId();
     final partnerData = await _partnerService.getPartnerData();
     if (!mounted) return;
+    final partnerUid = partnerData?['uid']?.toString();
     setState(() {
       _coupleId = coupleId;
       _partnerName = partnerData?['name'];
@@ -69,6 +73,21 @@ class _ChatScreenState extends State<ChatScreen> {
           : null;
       _loading = false;
     });
+    if (partnerUid != null && partnerUid.isNotEmpty) {
+      _partnerListener?.cancel();
+      _partnerListener = FirebaseDatabase.instance
+          .ref()
+          .child('users/$partnerUid')
+          .onValue
+          .listen((event) {
+        final data = event.snapshot.value;
+        if (data == null || !mounted) return;
+        final map = Map<dynamic, dynamic>.from(data as Map);
+        setState(() {
+          _partnerName = map['name']?.toString() ?? _partnerName;
+        });
+      });
+    }
   }
 
   Future<void> _sendMessage() async {

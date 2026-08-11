@@ -40,6 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _sinceText = '';
   String? _partnerUid;
   StreamSubscription<DatabaseEvent>? _userListener;
+  StreamSubscription<DatabaseEvent>? _partnerListener;
 
   @override
   void initState() {
@@ -47,6 +48,68 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadUserData();
     _listenUserData();
     _loadTimeTogether();
+  }
+
+  @override
+  void dispose() {
+    _userListener?.cancel();
+    _partnerListener?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadUserData() async {
+    final user = _authService.currentUser;
+    if (user == null) return;
+    final data = await _authService.getUserData(user.uid);
+    if (data != null && mounted) {
+      setState(() {
+        _userName = data['name'] ?? 'User';
+        _partnerUid = data['partner_uid']?.toString();
+        _paired = _partnerUid != null && _partnerUid!.isNotEmpty;
+        if (!_paired) _partnerName = 'Partner';
+      });
+      if (_paired) _attachPartnerListener(_partnerUid!);
+    }
+  }
+
+  void _listenUserData() {
+    final user = _authService.currentUser;
+    if (user == null) return;
+    _userListener = FirebaseDatabase.instance
+        .ref()
+        .child('users/${user.uid}')
+        .onValue
+        .listen((event) {
+      final data = event.snapshot.value;
+      if (data == null || !mounted) return;
+      final map = Map<dynamic, dynamic>.from(data as Map);
+      final partnerUid = map['partner_uid']?.toString();
+      setState(() {
+        _userName = map['name']?.toString() ?? _userName;
+        _paired = partnerUid != null && partnerUid.isNotEmpty;
+        _partnerUid = _paired ? partnerUid : null;
+        if (!_paired) _partnerName = 'Partner';
+      });
+      if (_paired && _partnerUid != null) {
+        _attachPartnerListener(_partnerUid!);
+      }
+    });
+  }
+
+  void _attachPartnerListener(String partnerUid) {
+    _partnerListener?.cancel();
+    _partnerListener = FirebaseDatabase.instance
+        .ref()
+        .child('users/$partnerUid')
+        .onValue
+        .listen((event) {
+      final data = event.snapshot.value;
+      if (data == null || !mounted) return;
+      final map = Map<dynamic, dynamic>.from(data as Map);
+      setState(() {
+        _partnerName = map['name']?.toString() ?? _partnerName;
+      });
+    });
   }
 
   @override

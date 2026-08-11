@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import '../services/auth_service.dart';
@@ -29,11 +30,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _partnerName = 'Partner';
   bool _paired = false;
   String _sinceText = '';
+  String? _partnerUid;
+  StreamSubscription<DatabaseEvent>? _ownListener;
+  StreamSubscription<DatabaseEvent>? _partnerListener;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _listen();
+  }
+
+  @override
+  void dispose() {
+    _ownListener?.cancel();
+    _partnerListener?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -43,17 +55,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) return;
     setState(() {
       _userName = data?['name'] ?? 'User';
-      _paired =
-          data?['partner_uid']?.toString().isNotEmpty == true;
+      _paired = data?['partner_uid']?.toString().isNotEmpty == true;
+      _partnerUid = data?['partner_uid']?.toString();
     });
-    if (_paired) {
-      final partner = await _partnerService.getPartnerData();
-      if (mounted) {
-        setState(() {
-          _partnerName = partner?['name'] ?? 'Partner';
-        });
-      }
-    }
+    if (_paired && _partnerUid != null) _attachPartnerListener(_partnerUid!);
     final coupleId = await _partnerService.getCoupleId();
     if (coupleId != null && mounted) {
       final event = await FirebaseDatabase.instance
@@ -69,6 +74,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
       }
     }
+  }
+
+  void _listen() {
+    final user = _authService.currentUser;
+    if (user == null) return;
+    _ownListener = FirebaseDatabase.instance
+        .ref()
+        .child('users/${user.uid}')
+        .onValue
+        .listen((event) {
+      final data = event.snapshot.value;
+      if (data == null || !mounted) return;
+      final map = Map<dynamic, dynamic>.from(data as Map);
+      final partnerUid = map['partner_uid']?.toString();
+      setState(() {
+        _userName = map['name']?.toString() ?? _userName;
+        _paired = partnerUid != null && partnerUid.isNotEmpty;
+        _partnerUid = _paired ? partnerUid : null;
+        if (!_paired) _partnerName = 'Partner';
+      });
+      if (_paired && _partnerUid != null) {
+        _attachPartnerListener(_partnerUid!);
+      }
+    });
+  }
+
+  void _attachPartnerListener(String partnerUid) {
+    _partnerListener?.cancel();
+    _partnerListener = FirebaseDatabase.instance
+        .ref()
+        .child('users/$partnerUid')
+        .onValue
+        .listen((event) {
+      final data = event.snapshot.value;
+      if (data == null || !mounted) return;
+      final map = Map<dynamic, dynamic>.from(data as Map);
+      setState(() {
+        _partnerName = map['name']?.toString() ?? _partnerName;
+      });
+    });
   }
 
   String _formatDate(DateTime date) {
