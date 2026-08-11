@@ -5,6 +5,17 @@ import '../providers/theme_provider.dart';
 import '../services/auth_service.dart';
 import '../services/partner_service.dart';
 
+const Color _background = Color(0xFFF8F9FA);
+const Color _surfaceContainer = Color(0xFFEDEEEF);
+const Color _surfaceContainerHigh = Color(0xFFE7E8E9);
+const Color _surfaceVariant = Color(0xFFE1E3E4);
+const Color _outlineVariant = Color(0xFFDAC1C0);
+const Color _primary = Color(0xFF964549);
+const Color _primaryContainer = Color(0xFFFF999C);
+const Color _onPrimaryContainer = Color(0xFF792E33);
+const Color _onSurface = Color(0xFF191C1D);
+const Color _onSurfaceVariant = Color(0xFF544242);
+
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
 
@@ -17,22 +28,30 @@ class _ChatScreenState extends State<ChatScreen> {
   final _authService = AuthService();
   final _scrollController = ScrollController();
   final _partnerService = PartnerService();
+  final _focusNode = FocusNode();
 
   String? _coupleId;
   String? _partnerName;
   bool _loading = true;
+  bool _inputFocused = false;
   DatabaseReference? _chatRef;
 
   @override
   void initState() {
     super.initState();
     _loadCouple();
+    _focusNode.addListener(() {
+      if (mounted) {
+        setState(() => _inputFocused = _focusNode.hasFocus);
+      }
+    });
   }
 
   @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -69,136 +88,499 @@ class _ChatScreenState extends State<ChatScreen> {
     _messageController.clear();
   }
 
+  void _showComingSoon() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Fitur ini segera hadir!'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final primaryColor = themeProvider.primaryColor;
-    final user = _authService.currentUser;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: _loading ? null : primaryColor,
-              child: const Icon(Icons.favorite, size: 18, color: Colors.white),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _loading || _coupleId == null ? 'Partner' : (_partnerName ?? 'Partner'),
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      backgroundColor: _background,
+      body: Column(
+        children: [
+          _buildHeader(primaryColor),
+          Expanded(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _coupleId == null
+                    ? _buildNotPaired(primaryColor)
+                    : _buildMessageList(),
+          ),
+          _buildInputBar(primaryColor),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(Color primaryColor) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _background.withOpacity(0.95),
+        border: const Border(
+          bottom: BorderSide(color: _surfaceVariant, width: 0.5),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: 64,
+          child: Row(
+            children: [
+              if (Navigator.canPop(context))
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  color: _onSurfaceVariant,
+                  onPressed: () => Navigator.pop(context),
                 ),
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Stack(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: _primaryContainer, width: 2),
+                          ),
+                          child: ClipOval(
+                            child: Image.asset(
+                              'assets/images/couple.jpg',
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.person,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF4CAF50),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _partnerName ?? 'Partner',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                color: _onSurface,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Text(
+                              '♥',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: _primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Text(
+                          'Online',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: _onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.more_vert),
+                color: _onSurfaceVariant,
+                onPressed: _showComingSoon,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageList() {
+    final user = _authService.currentUser;
+    return StreamBuilder<DatabaseEvent>(
+      stream: _chatRef!.orderByChild('timestamp').onValue,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.chat_bubble_outline,
+                  size: 60,
+                  color: Color(0xFF9E9E9E),
+                ),
+                SizedBox(height: 15),
                 Text(
-                  _loading ? 'Memuat...' : (_coupleId == null ? 'Belum terhubung' : 'Online'),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withOpacity(0.8),
-                  ),
+                  'Mulai ngobrol yuk!',
+                  style: TextStyle(fontSize: 16, color: Color(0xFF9E9E9E)),
                 ),
               ],
+            ),
+          );
+        }
+
+        final data = snapshot.data!.snapshot.value as Map;
+        final messages = <Map<String, dynamic>>[];
+        data.forEach((key, value) {
+          messages.add(Map<String, dynamic>.from(value));
+        });
+        messages.sort(
+          (a, b) => (b['timestamp'] ?? 0).compareTo(a['timestamp'] ?? 0),
+        );
+
+        final items = <Widget>[];
+        String? lastDay;
+        for (final msg in messages) {
+          final day = _dayLabel(msg['timestamp']);
+          if (day != null && day != lastDay) {
+            items.add(_buildDatePill(msg['timestamp']));
+            lastDay = day;
+          }
+          final isMe = msg['sender_uid'] == user?.uid;
+          items.add(_buildMessageBubble(msg, isMe));
+        }
+
+        return ListView.builder(
+          controller: _scrollController,
+          reverse: true,
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+          itemCount: items.length,
+          itemBuilder: (context, index) => items[index],
+        );
+      },
+    );
+  }
+
+  String? _dayLabel(dynamic timestamp) {
+    if (timestamp is! int) return null;
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    final now = DateTime.now();
+    final sameDay = date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
+    return '$sameDay-${date.year}-${date.month}-${date.day}';
+  }
+
+  Widget _buildDatePill(dynamic timestamp) {
+    final isToday = _dayLabel(timestamp)?.startsWith('true') ?? false;
+    String label;
+    if (timestamp is! int) {
+      label = '';
+    } else if (isToday) {
+      label = 'Today';
+    } else {
+      final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+      const months = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+      ];
+      label = '${date.day} ${months[date.month - 1]} ${date.year}';
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: _surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(999),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0A000000),
+                blurRadius: 4,
+              ),
+            ],
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: _onSurfaceVariant,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageBubble(Map<String, dynamic> msg, bool isMe) {
+    final maxWidth = MediaQuery.of(context).size.width * 0.85;
+    final timeText = _formatTime(msg['timestamp']);
+    final isRead = msg['is_read'] == true;
+
+    if (isMe) {
+      return Align(
+        alignment: Alignment.centerRight,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxWidth),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: _primaryContainer,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                    bottomLeft: Radius.circular(16),
+                    bottomRight: Radius.circular(4),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _primary.withOpacity(0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  msg['message'] ?? '',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: _onPrimaryContainer,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 4, right: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      timeText,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: _onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                    Icon(
+                      isRead
+                          ? Icons.done_all_rounded
+                          : Icons.done_rounded,
+                      size: 14,
+                      color: isRead
+                          ? _primary
+                          : _onSurfaceVariant,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/couple.jpg',
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) =>
+                      const Icon(Icons.person, size: 20, color: Colors.grey),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: _surfaceVariant),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                        bottomLeft: Radius.circular(4),
+                        bottomRight: Radius.circular(16),
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x05000000),
+                          blurRadius: 10,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      msg['message'] ?? '',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: _onSurface,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, left: 4),
+                    child: Text(
+                      timeText,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: _onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _coupleId == null
-              ? _buildNotPaired(primaryColor)
-              : Column(
-        children: [
-          Expanded(
-            child: StreamBuilder<DatabaseEvent>(
-              stream: _chatRef!.orderByChild('timestamp').onValue,
-              builder: (context, snapshot) {
-                if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
-                  return const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.chat_bubble_outline, size: 60, color: Colors.grey),
-                        SizedBox(height: 15),
-                        Text(
-                          'Mulai ngobrol yuk!',
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  );
-                }
+    );
+  }
 
-                Map<dynamic, dynamic> data = snapshot.data!.snapshot.value as Map;
-                List<Map<String, dynamic>> messages = [];
-
-                data.forEach((key, value) {
-                  messages.add(Map<String, dynamic>.from(value));
-                });
-
-                messages.sort((a, b) => (b['timestamp'] ?? 0).compareTo(a['timestamp'] ?? 0));
-
-                return ListView.builder(
-                  controller: _scrollController,
-                  reverse: true,
-                  padding: const EdgeInsets.all(15),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final msg = messages[index];
-                    final isMe = msg['sender_uid'] == user?.uid;
-                    return _buildMessageBubble(msg, isMe, primaryColor);
-                  },
-                );
-              },
-            ),
+  Widget _buildInputBar(Color primaryColor) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _background.withOpacity(0.95),
+        border: const Border(
+          top: BorderSide(color: _surfaceVariant, width: 0.4),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _primary.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
           ),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: Icon(Icons.camera_alt, color: primaryColor),
-                  onPressed: () {},
-                ),
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: InputDecoration(
-                      hintText: 'Ketik pesan...',
-                      fillColor: Colors.grey[100],
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.add_circle_rounded),
+                color: _onSurfaceVariant,
+                onPressed: _showComingSoon,
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: _surfaceContainer,
+                    border: Border.all(
+                      color: _inputFocused ? _primary : _outlineVariant,
+                      width: _inputFocused ? 1.2 : 1,
                     ),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _messageController,
+                          focusNode: _focusNode,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: _onSurface,
+                          ),
+                          decoration: const InputDecoration(
+                            hintText: 'Type a message...',
+                            hintStyle: TextStyle(color: _onSurfaceVariant),
+                            border: InputBorder.none,
+                            isCollapsed: true,
+                            contentPadding: EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          onSubmitted: (_) => _sendMessage(),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.mood_rounded),
+                        color: _onSurfaceVariant,
+                        onPressed: _showComingSoon,
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 10),
-                IconButton(
-                  icon: Icon(Icons.mic, color: primaryColor),
-                  onPressed: () {},
-                ),
-                Container(
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: _sendMessage,
+                child: Container(
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: primaryColor,
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryColor.withOpacity(0.2),
+                        blurRadius: 8,
+                      ),
+                    ],
                   ),
-                  child: IconButton(
-                    icon: const Icon(Icons.send, color: Colors.white, size: 20),
-                    onPressed: _sendMessage,
+                  child: const Icon(
+                    Icons.send_rounded,
+                    color: Colors.white,
+                    size: 20,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -242,61 +624,9 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildMessageBubble(
-    Map<String, dynamic> msg,
-    bool isMe,
-    Color primaryColor,
-  ) {
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-        ),
-        decoration: BoxDecoration(
-          color: isMe ? primaryColor : Colors.grey[200],
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(15),
-            topRight: const Radius.circular(15),
-            bottomLeft: Radius.circular(isMe ? 15 : 0),
-            bottomRight: Radius.circular(isMe ? 0 : 15),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              msg['message'] ?? '',
-              style: TextStyle(
-                color: isMe ? Colors.white : Colors.black87,
-                fontSize: 15,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              _formatTime(msg['timestamp']),
-              style: TextStyle(
-                color: isMe ? Colors.white70 : Colors.grey,
-                fontSize: 11,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   String _formatTime(dynamic timestamp) {
-    if (timestamp == null) return '';
-    int time;
-    if (timestamp is int) {
-      time = timestamp;
-    } else {
-      return '';
-    }
-    final date = DateTime.fromMillisecondsSinceEpoch(time);
+    if (timestamp is! int) return '';
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
     return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 }
