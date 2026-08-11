@@ -2,9 +2,35 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/auth_service.dart';
+import '../services/partner_service.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  final _partnerService = PartnerService();
+  bool _isPaired = false;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final isPaired = await _partnerService.isPaired();
+    if (mounted) {
+      setState(() {
+        _isPaired = isPaired;
+        _loading = false;
+      });
+    }
+  }
 
   static const List<Color> _presetColors = [
     Color(0xFFE91E63),
@@ -106,13 +132,24 @@ class SettingsScreen extends StatelessWidget {
             onChanged: (_) => themeProvider.toggleTheme(),
           ),
           const Divider(),
-          ListTile(
-            leading: Icon(Icons.person_add, color: primaryColor),
-            title: const Text('Hubungkan Pasangan'),
-            subtitle: const Text('Kirim undangan ke pasangan'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => Navigator.pushNamed(context, '/partner'),
-          ),
+          if (!_loading && !_isPaired)
+            ListTile(
+              leading: Icon(Icons.person_add, color: primaryColor),
+              title: const Text('Hubungkan Pasangan'),
+              subtitle: const Text('Kirim undangan ke pasangan'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.pushNamed(context, '/partner'),
+            ),
+          if (!_loading && _isPaired) ...[
+            ListTile(
+              leading: Icon(Icons.favorite, color: primaryColor),
+              title: const Text('Pasangan'),
+              subtitle: const Text('Kamu sudah terhubung'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.pushNamed(context, '/partner'),
+            ),
+            const Divider(),
+          ],
           const Divider(),
           ListTile(
             leading: Icon(Icons.cake, color: primaryColor),
