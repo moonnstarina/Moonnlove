@@ -112,65 +112,10 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  @override
-  void dispose() {
-    _userListener?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _loadUserData() async {
-    final user = _authService.currentUser;
-    if (user == null) return;
-    final data = await _authService.getUserData(user.uid);
-    if (data != null && mounted) {
-      setState(() {
-        _userName = data['name'] ?? 'User';
-        _partnerUid = data['partner_uid']?.toString();
-        _paired = _partnerUid != null && _partnerUid!.isNotEmpty;
-        if (!_paired) _partnerName = 'Partner';
-      });
-      if (_paired) _loadPartnerName();
-    }
-  }
-
-  void _listenUserData() {
-    final user = _authService.currentUser;
-    if (user == null) return;
-    _userListener = FirebaseDatabase.instance
-        .ref()
-        .child('users/${user.uid}')
-        .onValue
-        .listen((event) {
-      final data = event.snapshot.value;
-      if (data == null || !mounted) return;
-      final map = Map<dynamic, dynamic>.from(data as Map);
-      final partnerUid = map['partner_uid']?.toString();
-      setState(() {
-        _userName = map['name']?.toString() ?? _userName;
-        _paired = partnerUid != null && partnerUid.isNotEmpty;
-        _partnerUid = _paired ? partnerUid : null;
-        if (!_paired) _partnerName = 'Partner';
-      });
-      if (_paired) _loadPartnerName();
-    });
-  }
-
-  Future<void> _loadPartnerName() async {
-    final uid = _partnerUid;
-    if (uid == null || uid.isEmpty) return;
-    final data = await _authService.getUserData(uid);
-    if (data != null && mounted) {
-      setState(() {
-        _partnerName = data['name'] ?? 'Partner';
-      });
-    }
-  }
-
   Future<void> _loadTimeTogether() async {
     final coupleId = await _partnerService.getCoupleId();
     if (coupleId == null || !mounted) return;
-    final anniversary = await _partnerService.getAnniversary();
-    var since = anniversary;
+    var since = await _partnerService.getAnniversary();
     if (since == null) {
       final event = await FirebaseDatabase.instance
           .ref()
@@ -181,12 +126,12 @@ class _HomeScreenState extends State<HomeScreen> {
         since = DateTime.fromMillisecondsSinceEpoch(created);
       }
     }
-    if (since != null && mounted) {
-      setState(() {
-        _days = DateTime.now().difference(since).inDays;
-        _sinceText = _formatDate(since);
-      });
-    }
+    final resolved = since;
+    if (resolved == null || !mounted) return;
+    setState(() {
+      _days = DateTime.now().difference(resolved).inDays;
+      _sinceText = _formatDate(resolved);
+    });
   }
 
   String _formatDate(DateTime date) {
@@ -342,9 +287,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   size: 80,
                   color: _primary,
                 ),
-              ),
-            ),
-          ),
               ),
             ),
           ),
