@@ -111,7 +111,7 @@ class SettingsScreen extends StatelessWidget {
             title: const Text('Hubungkan Pasangan'),
             subtitle: const Text('Kirim undangan ke pasangan'),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () {},
+            onTap: () => Navigator.pushNamed(context, '/partner'),
           ),
           const Divider(),
           ListTile(

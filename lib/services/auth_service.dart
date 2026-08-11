@@ -24,6 +24,8 @@ class AuthService {
         'email': email,
         'photo_url': '',
         'partner_uid': '',
+        'couple_id': '',
+        'invite_code': '',
         'theme_primary_color': 0xFFE91E63,
         'theme_mode': 'light',
         'created_at': DateTime.now().millisecondsSinceEpoch,

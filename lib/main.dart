@@ -13,6 +13,7 @@ import 'screens/location_screen.dart';
 import 'screens/notes_screen.dart';
 import 'screens/photo_album_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/partner_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,6 +51,7 @@ class _Root extends StatelessWidget {
               '/notes': (context) => const NotesScreen(),
               '/album': (context) => const PhotoAlbumScreen(),
               '/settings': (context) => const SettingsScreen(),
+              '/partner': (context) => const PartnerScreen(),
             },
           );
         },
