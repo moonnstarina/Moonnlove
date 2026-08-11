@@ -109,11 +109,15 @@ class _PartnerScreenState extends State<PartnerScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (_isPaired) _buildPairedCard() else _buildInviteSection(),
-                  const SizedBox(height: 28),
-                  const Divider(),
-                  const SizedBox(height: 28),
-                  _buildPairSection(),
+                  if (_isPaired)
+                    _buildPairedCard()
+                  else ...[
+                    _buildInviteSection(),
+                    const SizedBox(height: 28),
+                    const Divider(),
+                    const SizedBox(height: 28),
+                    _buildPairSection(),
+                  ],
                 ],
               ),
             ),
@@ -143,6 +147,12 @@ class _PartnerScreenState extends State<PartnerScreen> {
           Text(
             _partnerName.isEmpty ? 'Partner' : _partnerName,
             style: const TextStyle(fontSize: 16, color: _primary),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Kamu sudah terhubung, bisa langsung chat, kirim lokasi, dan lainnya.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: _onSurfaceVariant),
           ),
         ],
       ),
