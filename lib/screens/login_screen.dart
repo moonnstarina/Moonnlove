@@ -59,11 +59,35 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login gagal: ${e.toString()}')),
+          SnackBar(content: Text(_authService.getErrorMessage(e))),
         );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _forgotPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Masukkan email kamu dulu')),
+      );
+      return;
+    }
+    try {
+      await _authService.resetPassword(email);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Link reset password terkirim ke $email')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_authService.getErrorMessage(e))),
+        );
+      }
     }
   }
 
@@ -133,7 +157,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () {},
+                            onPressed: _forgotPassword,
                             style: TextButton.styleFrom(
                               foregroundColor: _primary,
                               textStyle: const TextStyle(

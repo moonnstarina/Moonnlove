@@ -63,7 +63,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Register gagal: ${e.toString()}')),
+          SnackBar(content: Text(_authService.getErrorMessage(e))),
         );
       }
     } finally {

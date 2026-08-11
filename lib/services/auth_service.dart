@@ -9,10 +9,13 @@ class AuthService {
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
   Future<UserCredential> register(String email, String password, String name) async {
-    UserCredential result = await _auth.createUserWithEmailAndPassword(
+    final result = await _auth.createUserWithEmailAndPassword(
       email: email,
       password: password,
     );
+
+    await result.user?.updateDisplayName(name);
+    await result.user?.reload();
 
     try {
       await _db.child('users/${result.user!.uid}').set({
@@ -51,13 +54,43 @@ class AuthService {
 
   Future<Map<String, dynamic>?> getUserData(String uid) async {
     try {
-      DatabaseEvent event = await _db.child('users/$uid').once();
+      final DatabaseEvent event = await _db.child('users/$uid').once();
       if (event.snapshot.value != null) {
         return Map<String, dynamic>.from(event.snapshot.value as Map);
       }
     } catch (e) {
-      // Gagal baca data
+      return null;
     }
     return null;
+  }
+
+  String getErrorMessage(Object e) {
+    if (e is FirebaseAuthException) {
+      switch (e.code) {
+        case 'invalid-email':
+          return 'Format email tidak valid';
+        case 'user-disabled':
+          return 'Akun kamu telah dinonaktifkan';
+        case 'user-not-found':
+          return 'Email tidak terdaftar';
+        case 'wrong-password':
+          return 'Password salah';
+        case 'invalid-credential':
+          return 'Email atau password salah';
+        case 'email-already-in-use':
+          return 'Email sudah terdaftar, gunakan email lain';
+        case 'weak-password':
+          return 'Password terlalu lemah (minimal 6 karakter)';
+        case 'too-many-requests':
+          return 'Terlalu banyak percobaan, coba lagi nanti';
+        case 'network-request-failed':
+          return 'Tidak ada koneksi internet';
+        case 'operation-not-allowed':
+          return 'Metode login tidak diizinkan';
+        default:
+          return 'Terjadi kesalahan: ${e.message ?? e.code}';
+      }
+    }
+    return 'Terjadi kesalahan. Coba lagi.';
   }
 }
