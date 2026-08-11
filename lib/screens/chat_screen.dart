@@ -3,6 +3,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/auth_service.dart';
+import '../services/partner_service.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -15,15 +16,49 @@ class _ChatScreenState extends State<ChatScreen> {
   final _messageController = TextEditingController();
   final _authService = AuthService();
   final _scrollController = ScrollController();
-  final DatabaseReference _chatRef = FirebaseDatabase.instance.ref().child('chats');
+  final _partnerService = PartnerService();
+
+  String? _coupleId;
+  String? _partnerName;
+  bool _loading = true;
+  DatabaseReference? _chatRef;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCouple();
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadCouple() async {
+    final coupleId = await _partnerService.getCoupleId();
+    final partnerData = await _partnerService.getPartnerData();
+    if (!mounted) return;
+    setState(() {
+      _coupleId = coupleId;
+      _partnerName = partnerData?['name'];
+      _chatRef = coupleId != null
+          ? FirebaseDatabase.instance
+              .ref()
+              .child('couples/$coupleId/messages')
+          : null;
+      _loading = false;
+    });
+  }
 
   Future<void> _sendMessage() async {
     if (_messageController.text.trim().isEmpty) return;
-
+    final ref = _chatRef;
     final user = _authService.currentUser;
-    if (user == null) return;
+    if (ref == null || user == null) return;
 
-    await _chatRef.push().set({
+    await ref.push().set({
       'sender_uid': user.uid,
       'message': _messageController.text.trim(),
       'type': 'text',
@@ -44,20 +79,21 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         title: Row(
           children: [
-            const CircleAvatar(
+            CircleAvatar(
               radius: 18,
-              child: Icon(Icons.person, size: 20),
+              backgroundColor: _loading ? null : primaryColor,
+              child: const Icon(Icons.favorite, size: 18, color: Colors.white),
             ),
             const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Partner',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                Text(
+                  _loading || _coupleId == null ? 'Partner' : (_partnerName ?? 'Partner'),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'Online',
+                  _loading ? 'Memuat...' : (_coupleId == null ? 'Belum terhubung' : 'Online'),
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.white.withOpacity(0.8),
@@ -68,11 +104,15 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
       ),
-      body: Column(
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _coupleId == null
+              ? _buildNotPaired(primaryColor)
+              : Column(
         children: [
           Expanded(
             child: StreamBuilder<DatabaseEvent>(
-              stream: _chatRef.orderByChild('timestamp').onValue,
+              stream: _chatRef!.orderByChild('timestamp').onValue,
               builder: (context, snapshot) {
                 if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
                   return const Center(

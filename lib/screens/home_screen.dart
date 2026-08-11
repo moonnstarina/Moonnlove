@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/auth_service.dart';
@@ -16,11 +18,20 @@ class _HomeScreenState extends State<HomeScreen> {
   String _partnerName = 'Belum terhubung';
   String _statusText = '';
   int _missCount = 0;
+  String? _partnerUid;
+  StreamSubscription<DatabaseEvent>? _userListener;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _listenUserData();
+  }
+
+  @override
+  void dispose() {
+    _userListener?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadUserData() async {
@@ -30,8 +41,53 @@ class _HomeScreenState extends State<HomeScreen> {
       if (data != null && mounted) {
         setState(() {
           _userName = data['name'] ?? 'User';
+          _partnerUid = data['partner_uid']?.toString();
+          if (_partnerUid == null || _partnerUid!.isEmpty) {
+            _partnerName = 'Belum terhubung';
+          }
         });
+        if (_partnerUid != null && _partnerUid!.isNotEmpty) {
+          _loadPartnerName();
+        }
       }
+    }
+  }
+
+  void _listenUserData() {
+    final user = _authService.currentUser;
+    if (user == null) return;
+    _userListener = FirebaseDatabase.instance
+        .ref()
+        .child('users/${user.uid}')
+        .onValue
+        .listen((event) {
+      final data = event.snapshot.value;
+      if (data == null || !mounted) return;
+      final map = Map<dynamic, dynamic>.from(data as Map);
+      final partnerUid = map['partner_uid']?.toString();
+      setState(() {
+        _userName = map['name']?.toString() ?? _userName;
+        if (partnerUid != null && partnerUid.isNotEmpty) {
+          _partnerUid = partnerUid;
+        } else {
+          _partnerUid = null;
+          _partnerName = 'Belum terhubung';
+        }
+      });
+      if (partnerUid != null && partnerUid.isNotEmpty) {
+        _loadPartnerName();
+      }
+    });
+  }
+
+  Future<void> _loadPartnerName() async {
+    final uid = _partnerUid;
+    if (uid == null || uid.isEmpty) return;
+    final data = await _authService.getUserData(uid);
+    if (data != null && mounted) {
+      setState(() {
+        _partnerName = data['name'] ?? 'Partner';
+      });
     }
   }
 
