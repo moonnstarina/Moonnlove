@@ -8,6 +8,7 @@ import 'providers/theme_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/main_shell.dart';
 import 'screens/chat_screen.dart';
 import 'screens/location_screen.dart';
 import 'screens/notes_screen.dart';
@@ -45,7 +46,7 @@ class _Root extends StatelessWidget {
               '/': (context) => const AuthGate(),
               '/login': (context) => const LoginScreen(),
               '/register': (context) => const RegisterScreen(),
-              '/home': (context) => const HomeScreen(),
+              '/home': (context) => const MainShell(),
               '/chat': (context) => const ChatScreen(),
               '/location': (context) => const LocationScreen(),
               '/notes': (context) => const NotesScreen(),
@@ -76,7 +77,7 @@ class AuthGate extends StatelessWidget {
         }
         final user = snapshot.data;
         if (user != null) {
-          return const HomeScreen();
+          return const MainShell();
         }
         return const LoginScreen();
       },

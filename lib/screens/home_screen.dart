@@ -4,9 +4,26 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/auth_service.dart';
+import '../services/partner_service.dart';
+
+const Color _background = Color(0xFFF8F9FA);
+const Color _primary = Color(0xFF964549);
+const Color _primaryContainer = Color(0xFFFF999C);
+const Color _primaryFixed = Color(0xFFFFDAD9);
+const Color _onSurface = Color(0xFF191C1D);
+const Color _onSurfaceVariant = Color(0xFF544242);
+const Color _outline = Color(0xFF877272);
+const Color _surfaceLowest = Color(0xFFFFFFFF);
+const Color _surfaceContainer = Color(0xFFEDEEEF);
+const Color _secondary = Color(0xFF695B5B);
+const Color _secondaryContainer = Color(0xFFF1DEDE);
+const Color _tertiary = Color(0xFF6E595A);
+const Color _tertiaryContainer = Color(0xFFCAAFAF);
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.onNavigateToTab});
+
+  final void Function(int index)? onNavigateToTab;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -14,10 +31,13 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _authService = AuthService();
+  final _partnerService = PartnerService();
+
   String _userName = 'User';
-  String _partnerName = 'Belum terhubung';
-  String _statusText = '';
-  int _missCount = 0;
+  String _partnerName = 'Partner';
+  bool _paired = false;
+  int _days = 0;
+  String _sinceText = '';
   String? _partnerUid;
   StreamSubscription<DatabaseEvent>? _userListener;
 
@@ -26,6 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _loadUserData();
     _listenUserData();
+    _loadTimeTogether();
   }
 
   @override
@@ -36,20 +57,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadUserData() async {
     final user = _authService.currentUser;
-    if (user != null) {
-      final data = await _authService.getUserData(user.uid);
-      if (data != null && mounted) {
-        setState(() {
-          _userName = data['name'] ?? 'User';
-          _partnerUid = data['partner_uid']?.toString();
-          if (_partnerUid == null || _partnerUid!.isEmpty) {
-            _partnerName = 'Belum terhubung';
-          }
-        });
-        if (_partnerUid != null && _partnerUid!.isNotEmpty) {
-          _loadPartnerName();
-        }
-      }
+    if (user == null) return;
+    final data = await _authService.getUserData(user.uid);
+    if (data != null && mounted) {
+      setState(() {
+        _userName = data['name'] ?? 'User';
+        _partnerUid = data['partner_uid']?.toString();
+        _paired = _partnerUid != null && _partnerUid!.isNotEmpty;
+        if (!_paired) _partnerName = 'Partner';
+      });
+      if (_paired) _loadPartnerName();
     }
   }
 
@@ -67,16 +84,11 @@ class _HomeScreenState extends State<HomeScreen> {
       final partnerUid = map['partner_uid']?.toString();
       setState(() {
         _userName = map['name']?.toString() ?? _userName;
-        if (partnerUid != null && partnerUid.isNotEmpty) {
-          _partnerUid = partnerUid;
-        } else {
-          _partnerUid = null;
-          _partnerName = 'Belum terhubung';
-        }
+        _paired = partnerUid != null && partnerUid.isNotEmpty;
+        _partnerUid = _paired ? partnerUid : null;
+        if (!_paired) _partnerName = 'Partner';
       });
-      if (partnerUid != null && partnerUid.isNotEmpty) {
-        _loadPartnerName();
-      }
+      if (_paired) _loadPartnerName();
     });
   }
 
@@ -91,14 +103,36 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _sendMissYou() async {
-    setState(() => _missCount++);
+  Future<void> _loadTimeTogether() async {
+    final coupleId = await _partnerService.getCoupleId();
+    if (coupleId == null || !mounted) return;
+    final event = await FirebaseDatabase.instance
+        .ref()
+        .child('couples/$coupleId/created_at')
+        .once();
+    final created = event.snapshot.value;
+    if (created is int && mounted) {
+      final since = DateTime.fromMillisecondsSinceEpoch(created);
+      setState(() {
+        _days = DateTime.now().difference(since).inDays;
+        _sinceText = _formatDate(since);
+      });
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+    ];
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  void _showComingSoon() {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Kamu sudah miss $_partnerName $_missCount kali hari ini 🥺'),
-        backgroundColor: context.read<ThemeProvider>().primaryColor,
+      const SnackBar(
+        content: Text('Fitur ini segera hadir!'),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       ),
     );
   }
@@ -107,214 +141,368 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final primaryColor = themeProvider.primaryColor;
+    final coupleName = _paired ? '$_userName ♥ $_partnerName' : _userName;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('MoonnLove'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => Navigator.pushNamed(context, '/settings'),
+      backgroundColor: _background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildTopBar(coupleName),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 24,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildHeroCard(),
+                    const SizedBox(height: 32),
+                    _buildTimeTogetherCard(),
+                    const SizedBox(height: 32),
+                    _buildQuickActions(primaryColor),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopBar(String coupleName) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: _primaryContainer,
+              shape: BoxShape.circle,
+            ),
+            child: ClipOval(
+              child: Image.asset(
+                'assets/images/couple.jpg',
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) =>
+                    const Icon(Icons.person, color: Colors.white),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  coupleName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: _primary,
+                  ),
+                ),
+                Text(
+                  _paired ? 'Online' : 'Belum terhubung',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: _onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: _showComingSoon,
+            child: const Padding(
+              padding: EdgeInsets.all(4),
+              child: Icon(
+                Icons.notifications_rounded,
+                color: _onSurfaceVariant,
+                size: 26,
+              ),
+            ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(30),
+    );
+  }
+
+  Widget _buildHeroCard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: _surfaceLowest,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: _primary.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: DecoratedBox(
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    primaryColor,
-                    primaryColor.withOpacity(0.7),
-                  ],
-                ),
-              ),
-              child: Column(
-                children: [
-                  Stack(
-                    children: [
-                      CircleAvatar(
-                        radius: 55,
-                        backgroundColor: Colors.white.withOpacity(0.3),
-                        child: const Icon(
-                          Icons.person,
-                          size: 60,
-                          color: Colors.white,
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                            color: Colors.green,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.circle,
-                            size: 12,
-                            color: Colors.green,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
-                  Text(
-                    _partnerName,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    'Online',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white.withOpacity(0.8),
-                    ),
-                  ),
-                  if (_statusText.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 15,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        _statusText,
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 15),
-                  Text(
-                    'Hai, $_userName ❤️',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white.withOpacity(0.9),
-                    ),
-                  ),
-                ],
+                color: _primaryFixed.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(24),
               ),
             ),
-            const SizedBox(height: 30),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
-              child: GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 15,
-                crossAxisSpacing: 15,
-                children: [
-                  _buildFeatureCard(
-                    context,
-                    icon: Icons.chat_bubble_outline,
-                    label: 'Chat',
-                    color: Colors.blue,
-                    onTap: () => Navigator.pushNamed(context, '/chat'),
-                  ),
-                  _buildFeatureCard(
-                    context,
-                    icon: Icons.location_on_outlined,
-                    label: 'Lokasi',
-                    color: Colors.green,
-                    onTap: () => Navigator.pushNamed(context, '/location'),
-                  ),
-                  _buildFeatureCard(
-                    context,
-                    icon: Icons.note_outlined,
-                    label: 'Catatan',
-                    color: Colors.orange,
-                    onTap: () => Navigator.pushNamed(context, '/notes'),
-                  ),
-                  _buildFeatureCard(
-                    context,
-                    icon: Icons.photo_library_outlined,
-                    label: 'Album',
-                    color: Colors.purple,
-                    onTap: () => Navigator.pushNamed(context, '/album'),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 30),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _sendMissYou,
-                  icon: const Icon(Icons.favorite, size: 28),
-                  label: Text(
-                    'Miss You ($_missCount)',
-                    style: const TextStyle(fontSize: 18),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                  ),
+          ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: AspectRatio(
+              aspectRatio: 1,
+              child: Image.asset(
+                'assets/images/couple.jpg',
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Icon(
+                  Icons.favorite,
+                  size: 80,
+                  color: _primary,
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildFeatureCard(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.2),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 40, color: color),
-            const SizedBox(height: 10),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: color,
+  Widget _buildTimeTogetherCard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: _surfaceLowest,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: _primary.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            top: 0,
+            right: 0,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Icon(
+                Icons.favorite_rounded,
+                size: 40,
+                color: _primary.withOpacity(0.2),
               ),
             ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Our Time Together',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: _onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    '$_days',
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w700,
+                      color: _primary,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Days',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: _onSurface,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _paired && _sinceText.isNotEmpty
+                    ? 'Since $_sinceText'
+                    : 'Hubungkan pasangan dulu',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: _outline,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActions(Color primaryColor) {
+    final items = [
+      _QuickAction(
+        icon: Icons.chat_rounded,
+        label: 'Chat',
+        bg: _primaryContainer.withOpacity(0.2),
+        fg: _primary,
+        tab: 1,
+      ),
+      _QuickAction(
+        icon: Icons.local_fire_department_rounded,
+        label: 'Streak',
+        bg: _tertiaryContainer.withOpacity(0.2),
+        fg: _tertiary,
+      ),
+      _QuickAction(
+        icon: Icons.photo_library_rounded,
+        label: 'Past Picture',
+        bg: _secondaryContainer.withOpacity(0.2),
+        fg: _secondary,
+        tab: 2,
+      ),
+      _QuickAction(
+        icon: Icons.videogame_asset_rounded,
+        label: 'Game',
+        bg: _primaryContainer.withOpacity(0.2),
+        fg: _primary,
+        tab: 3,
+      ),
+      _QuickAction(
+        icon: Icons.music_note_rounded,
+        label: 'Note & Playlist',
+        bg: _tertiaryContainer.withOpacity(0.2),
+        fg: _tertiary,
+        route: '/notes',
+        more: true,
+      ),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: _surfaceLowest,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: _primary.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: List.generate(items.length, (i) {
+          final item = items[i];
+          return Column(
+            children: [
+              _buildQuickActionTile(item, primaryColor),
+              if (i != items.length - 1)
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: _surfaceContainer,
+                ),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionTile(_QuickAction item, Color primaryColor) {
+    return InkWell(
+      onTap: () {
+        if (item.route != null) {
+          Navigator.pushNamed(context, item.route!);
+        } else if (item.tab != null && widget.onNavigateToTab != null) {
+          widget.onNavigateToTab!(item.tab!);
+        } else {
+          _showComingSoon();
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: item.bg,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(item.icon, color: item.fg, size: 22),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                item.label,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: _onSurface,
+                ),
+              ),
+            ),
+            if (item.more)
+              const Padding(
+                padding: EdgeInsets.only(right: 4),
+                child: Text(
+                  'More',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: _onSurfaceVariant,
+                  ),
+                ),
+              ),
+            const Icon(Icons.chevron_right_rounded, color: _onSurfaceVariant),
           ],
         ),
       ),
     );
   }
+}
+
+class _QuickAction {
+  const _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.bg,
+    required this.fg,
+    this.tab,
+    this.route,
+    this.more = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color bg;
+  final Color fg;
+  final int? tab;
+  final String? route;
+  final bool more;
 }
