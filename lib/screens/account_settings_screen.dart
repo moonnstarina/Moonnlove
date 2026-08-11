@@ -31,6 +31,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
   final _partnerService = PartnerService();
   bool _isPaired = false;
   bool _loading = true;
+  DateTime? _anniversary;
 
   @override
   void initState() {
@@ -40,12 +41,46 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
   Future<void> _load() async {
     final isPaired = await _partnerService.isPaired();
+    final anniversary = await _partnerService.getAnniversary();
     if (mounted) {
       setState(() {
         _isPaired = isPaired;
+        _anniversary = anniversary;
         _loading = false;
       });
     }
+  }
+
+  Future<void> _pickAnniversary() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _anniversary ?? now,
+      firstDate: DateTime(2000),
+      lastDate: now,
+      helpText: 'Tanggal Jadian',
+      cancelText: 'Batal',
+      confirmText: 'Simpan',
+    );
+    if (picked == null) return;
+    await _partnerService.saveAnniversary(picked);
+    if (mounted) {
+      setState(() => _anniversary = picked);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tanggal jadian disimpan!'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+    ];
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
   @override
@@ -140,14 +175,21 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
             ),
             const Divider(),
           ],
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: Icon(Icons.cake_rounded, color: primaryColor),
-            title: const Text('Tanggal Jadian'),
-            subtitle: const Text('Set anniversary countdown'),
-            trailing: const Icon(Icons.chevron_right_rounded),
-            onTap: () {},
-          ),
+          if (_isPaired) ...[
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.cake_rounded, color: primaryColor),
+              title: const Text('Tanggal Jadian'),
+              subtitle: Text(
+                _anniversary != null
+                    ? _formatDate(_anniversary!)
+                    : 'Set anniversary countdown',
+              ),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: _pickAnniversary,
+            ),
+            const Divider(),
+          ],
         ],
       ),
     );

@@ -174,7 +174,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                           child: ClipOval(
                             child: Image.asset(
-                              'assets/images/couple.jpg',
+                              'assets/images/avatar.jpg',
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => const Icon(
                                 Icons.person,
@@ -446,7 +446,7 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
               child: ClipOval(
                 child: Image.asset(
-                  'assets/images/couple.jpg',
+                  'assets/images/avatar.jpg',
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) =>
                       const Icon(Icons.person, size: 20, color: Colors.grey),

@@ -1,9 +1,13 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 import '../services/auth_service.dart';
 import '../services/partner_service.dart';
 import 'account_settings_screen.dart';
+import 'notification_settings_screen.dart';
 
 const Color _background = Color(0xFFF8F9FA);
 const Color _primary = Color(0xFF964549);
@@ -31,6 +35,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _paired = false;
   String _sinceText = '';
   String? _partnerUid;
+  String? _photoUrl;
   StreamSubscription<DatabaseEvent>? _ownListener;
   StreamSubscription<DatabaseEvent>? _partnerListener;
 
@@ -57,10 +62,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _userName = data?['name'] ?? 'User';
       _paired = data?['partner_uid']?.toString().isNotEmpty == true;
       _partnerUid = data?['partner_uid']?.toString();
+      _photoUrl = data?['photo_url']?.toString();
     });
     if (_paired && _partnerUid != null) _attachPartnerListener(_partnerUid!);
     final coupleId = await _partnerService.getCoupleId();
     if (coupleId != null && mounted) {
+      final anniversary = await _partnerService.getAnniversary();
+      if (anniversary != null && mounted) {
+        setState(() {
+          _sinceText = _formatDate(anniversary);
+        });
+        return;
+      }
       final event = await FirebaseDatabase.instance
           .ref()
           .child('couples/$coupleId/created_at')
@@ -90,6 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final partnerUid = map['partner_uid']?.toString();
       setState(() {
         _userName = map['name']?.toString() ?? _userName;
+        _photoUrl = map['photo_url']?.toString();
         _paired = partnerUid != null && partnerUid.isNotEmpty;
         _partnerUid = _paired ? partnerUid : null;
         if (!_paired) _partnerName = 'Partner';
@@ -133,41 +147,155 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildAvatar() {
+    final fallback = Image.asset(
+      'assets/images/avatar.jpg',
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => const Icon(
+        Icons.person_rounded,
+        size: 90,
+        color: Color(0xFF964549),
+      ),
+    );
+    if (_photoUrl != null && _photoUrl!.isNotEmpty) {
+      return Image.network(
+        _photoUrl!,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => fallback,
+      );
+    }
+    return fallback;
+  }
+
   Future<void> _editProfile() async {
     final controller = TextEditingController(text: _userName);
-    final newName = await showDialog<String>(
+    XFile? picked;
+    final result = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Edit Nama'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            hintText: 'Nama kamu',
-            border: OutlineInputBorder(),
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Edit Profile'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: () async {
+                  final file = await ImagePicker().pickImage(
+                    source: ImageSource.gallery,
+                    maxWidth: 600,
+                    maxHeight: 600,
+                    imageQuality: 85,
+                  );
+                  if (file != null) setDialogState(() => picked = file);
+                },
+                child: Container(
+                  width: 96,
+                  height: 96,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFFDAD9),
+                    shape: BoxShape.circle,
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (picked != null)
+                        Image.file(File(picked!.path), fit: BoxFit.cover)
+                      else if (_photoUrl != null && _photoUrl!.isNotEmpty)
+                        Image.network(
+                          _photoUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              Image.asset('assets/images/avatar.jpg'),
+                        )
+                      else
+                        Image.asset('assets/images/avatar.jpg'),
+                      Container(
+                        color: Colors.black26,
+                        child: const Icon(
+                          Icons.photo_camera_rounded,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Ketuk untuk ganti foto',
+                style: TextStyle(fontSize: 12, color: _onSurfaceVariant),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                decoration: const InputDecoration(
+                  hintText: 'Nama kamu',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () =>
+                  Navigator.pop(dialogContext, controller.text.trim()),
+              style: ElevatedButton.styleFrom(backgroundColor: _primary),
+              child: const Text('Simpan', style: TextStyle(color: Colors.white)),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, controller.text.trim()),
-            style: ElevatedButton.styleFrom(backgroundColor: _primary),
-            child: const Text('Simpan', style: TextStyle(color: Colors.white)),
-          ),
-        ],
       ),
     );
 
     final user = _authService.currentUser;
-    if (newName == null || newName.isEmpty || user == null) return;
+    if (result == null || result.isEmpty || user == null) return;
+
+    var photoUrl = _photoUrl;
+    if (picked != null) {
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => const Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      }
+      try {
+        final ref = FirebaseStorage.instance
+            .ref()
+            .child('profiles/${user.uid}.jpg');
+        await ref.putData(await File(picked!.path).readAsBytes());
+        photoUrl = await ref.getDownloadURL();
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Foto gagal diupload, nama tetap tersimpan'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) Navigator.pop(context);
+      }
+    }
+
+    final updates = <String, Object?>{'name': result};
+    if (photoUrl != null) updates['photo_url'] = photoUrl;
     await FirebaseDatabase.instance
         .ref()
         .child('users/${user.uid}')
-        .update({'name': newName});
-    if (mounted) setState(() => _userName = newName);
+        .update(updates);
+    if (mounted) setState(() => _userName = result);
   }
 
   @override
@@ -217,17 +345,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             color: Color(0xFFFFDAD9),
             shape: BoxShape.circle,
           ),
-          child: ClipOval(
-            child: Image.asset(
-              'assets/images/couple.jpg',
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const Icon(
-                Icons.person_rounded,
-                size: 90,
-                color: Color(0xFF964549),
-              ),
-            ),
-          ),
+          child: ClipOval(child: _buildAvatar()),
         ),
         const SizedBox(height: 16),
         Row(
@@ -302,7 +420,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _buildMenuTile(
             icon: Icons.notifications_rounded,
             label: 'Notifikasi',
-            onTap: _comingSoon,
+            onTap: () => Navigator.pushNamed(context, '/notifications'),
           ),
           _buildMenuTile(
             icon: Icons.language_rounded,

@@ -127,4 +127,50 @@ class PartnerService {
     if (partnerUid == null || partnerUid.isEmpty) return null;
     return await _authService.getUserData(partnerUid);
   }
+
+  Future<void> saveAnniversary(DateTime date) async {
+    final coupleId = await getCoupleId();
+    if (coupleId == null) throw Exception('Belum terhubung dengan pasangan');
+    await _couplesRef
+        .child(coupleId)
+        .child('anniversary')
+        .set(date.millisecondsSinceEpoch);
+  }
+
+  Future<DateTime?> getAnniversary() async {
+    final coupleId = await getCoupleId();
+    if (coupleId == null) return null;
+    final event = await _couplesRef
+        .child(coupleId)
+        .child('anniversary')
+        .once();
+    final value = event.snapshot.value;
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value);
+    }
+    return null;
+  }
+
+  Future<void> savePhotoUrl(String url) async {
+    final uid = currentUid;
+    if (uid == null) return;
+    await _usersRef.child(uid).update({'photo_url': url});
+  }
+
+  Future<void> saveNotificationPrefs(Map<String, bool> prefs) async {
+    final uid = currentUid;
+    if (uid == null) return;
+    await _usersRef.child(uid).child('notifications').set(prefs);
+  }
+
+  Future<Map<String, bool>> getNotificationPrefs() async {
+    final uid = currentUid;
+    if (uid == null) return {};
+    final data = await _authService.getUserData(uid);
+    final prefs = data?['notifications'];
+    if (prefs is Map) {
+      return prefs.map((k, v) => MapEntry(k.toString(), v == true));
+    }
+    return {};
+  }
 }

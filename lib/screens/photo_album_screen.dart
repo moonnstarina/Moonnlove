@@ -111,12 +111,12 @@ class _PhotoAlbumScreenState extends State<PhotoAlbumScreen> {
 
   Widget _buildMasonryGrid() {
     const tiles = [
-      (ratio: 3 / 4, color: Color(0xFFFFDAD9), icon: Icons.photo_rounded),
-      (ratio: 1.0, color: Color(0xFFF9DCDC), icon: Icons.local_cafe_rounded),
-      (ratio: 4 / 3, color: Color(0xFFF1DEDE), icon: Icons.landscape_rounded),
-      (ratio: 3 / 4, color: Color(0xFFFFDAD9), icon: Icons.person_rounded),
-      (ratio: 1.0, color: Color(0xFFF1DEDE), icon: Icons.restaurant_rounded),
-      (ratio: 4 / 5, color: Color(0xFFF9DCDC), icon: Icons.favorite_rounded),
+      (asset: 'assets/images/album1.jpg', ratio: 3 / 4),
+      (asset: 'assets/images/album2.jpg', ratio: 1.0),
+      (asset: 'assets/images/album3.jpg', ratio: 4 / 3),
+      (asset: 'assets/images/album4.jpg', ratio: 3 / 4),
+      (asset: 'assets/images/album5.jpg', ratio: 1.0),
+      (asset: 'assets/images/album6.jpg', ratio: 4 / 5),
     ];
 
     final left = <Widget>[];
@@ -130,15 +130,19 @@ class _PhotoAlbumScreenState extends State<PhotoAlbumScreen> {
             margin: const EdgeInsets.only(bottom: 12),
             child: AspectRatio(
               aspectRatio: tile.ratio,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: tile.color,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  tile.icon,
-                  size: 40,
-                  color: _primary.withOpacity(0.5),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset(
+                  tile.asset,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: const Color(0xFFFFDAD9),
+                    child: const Icon(
+                      Icons.photo_rounded,
+                      size: 40,
+                      color: Color(0x80964549),
+                    ),
+                  ),
                 ),
               ),
             ),

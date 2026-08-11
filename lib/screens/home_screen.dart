@@ -169,13 +169,19 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadTimeTogether() async {
     final coupleId = await _partnerService.getCoupleId();
     if (coupleId == null || !mounted) return;
-    final event = await FirebaseDatabase.instance
-        .ref()
-        .child('couples/$coupleId/created_at')
-        .once();
-    final created = event.snapshot.value;
-    if (created is int && mounted) {
-      final since = DateTime.fromMillisecondsSinceEpoch(created);
+    final anniversary = await _partnerService.getAnniversary();
+    var since = anniversary;
+    if (since == null) {
+      final event = await FirebaseDatabase.instance
+          .ref()
+          .child('couples/$coupleId/created_at')
+          .once();
+      final created = event.snapshot.value;
+      if (created is int) {
+        since = DateTime.fromMillisecondsSinceEpoch(created);
+      }
+    }
+    if (since != null && mounted) {
       setState(() {
         _days = DateTime.now().difference(since).inDays;
         _sinceText = _formatDate(since);
@@ -251,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: ClipOval(
               child: Image.asset(
-                'assets/images/couple.jpg',
+                'assets/images/avatar.jpg',
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) =>
                     const Icon(Icons.person, color: Colors.white),
@@ -329,13 +335,16 @@ class _HomeScreenState extends State<HomeScreen> {
             child: AspectRatio(
               aspectRatio: 1,
               child: Image.asset(
-                'assets/images/couple.jpg',
-                fit: BoxFit.contain,
+                'assets/images/hero.jpg',
+                fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => const Icon(
                   Icons.favorite,
                   size: 80,
                   color: _primary,
                 ),
+              ),
+            ),
+          ),
               ),
             ),
           ),

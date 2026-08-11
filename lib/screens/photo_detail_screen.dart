@@ -105,6 +105,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
   }
 
   Widget _buildPhotoCard(int index) {
+    final photoNumber = (index % 6) + 1;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: AspectRatio(
@@ -112,19 +113,25 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFFFFDAD9), Color(0xFFF9DCDC)],
+            ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Image.asset(
+                'assets/images/album$photoNumber.jpg',
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFFFFDAD9), Color(0xFFF9DCDC)],
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.photo_rounded,
+                    size: 80,
+                    color: Color(0x80FFFFFF),
+                  ),
                 ),
-              ),
-              child: const Icon(
-                Icons.photo_rounded,
-                size: 80,
-                color: Color(0x80FFFFFF),
               ),
             ),
             DecoratedBox(

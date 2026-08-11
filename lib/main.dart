@@ -15,6 +15,7 @@ import 'screens/notes_screen.dart';
 import 'screens/photo_album_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/account_settings_screen.dart';
+import 'screens/notification_settings_screen.dart';
 import 'screens/partner_screen.dart';
 import 'screens/streak_screen.dart';
 
@@ -55,6 +56,7 @@ class _Root extends StatelessWidget {
               '/album': (context) => const PhotoAlbumScreen(),
               '/settings': (context) => const ProfileScreen(),
               '/account-settings': (context) => const AccountSettingsScreen(),
+              '/notifications': (context) => const NotificationSettingsScreen(),
               '/partner': (context) => const PartnerScreen(),
               '/streak': (context) => const StreakScreen(),
             },

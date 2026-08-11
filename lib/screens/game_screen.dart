@@ -161,7 +161,7 @@ class GameScreen extends StatelessWidget {
           children: [
             ClipOval(
               child: Image.asset(
-                'assets/images/couple.jpg',
+                'assets/images/game_hero.jpg',
                 fit: BoxFit.cover,
                 color: _primary.withOpacity(0.15),
                 colorBlendMode: BlendMode.multiply,
