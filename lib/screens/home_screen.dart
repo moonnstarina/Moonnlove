@@ -376,6 +376,7 @@ class _HomeScreenState extends State<HomeScreen> {
         label: 'Streak',
         bg: _tertiaryContainer.withOpacity(0.2),
         fg: _tertiary,
+        route: '/streak',
       ),
       _QuickAction(
         icon: Icons.photo_library_rounded,

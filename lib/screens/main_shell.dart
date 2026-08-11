@@ -4,7 +4,6 @@ import 'chat_screen.dart';
 import 'photo_album_screen.dart';
 import 'game_screen.dart';
 import 'settings_screen.dart';
-
 const Color _surfaceLowest = Color(0xFFFFFFFF);
 const Color _primaryContainer = Color(0xFFFF999C);
 const Color _onPrimaryContainer = Color(0xFF792E33);
@@ -25,7 +24,7 @@ class _MainShellState extends State<MainShell> {
     const ChatScreen(),
     const PhotoAlbumScreen(),
     const GameScreen(),
-    const SettingsScreen(),
+    const ProfileScreen(),
   ];
 
   void _onNavigate(int index) => setState(() => _index = index);

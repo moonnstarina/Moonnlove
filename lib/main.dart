@@ -14,7 +14,9 @@ import 'screens/location_screen.dart';
 import 'screens/notes_screen.dart';
 import 'screens/photo_album_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/account_settings_screen.dart';
 import 'screens/partner_screen.dart';
+import 'screens/streak_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,8 +53,10 @@ class _Root extends StatelessWidget {
               '/location': (context) => const LocationScreen(),
               '/notes': (context) => const NotesScreen(),
               '/album': (context) => const PhotoAlbumScreen(),
-              '/settings': (context) => const SettingsScreen(),
+              '/settings': (context) => const ProfileScreen(),
+              '/account-settings': (context) => const AccountSettingsScreen(),
               '/partner': (context) => const PartnerScreen(),
+              '/streak': (context) => const StreakScreen(),
             },
           );
         },
