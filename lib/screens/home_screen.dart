@@ -51,9 +51,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _loadUserData();
     _listenUserData();
     _loadTimeTogether();
-    _daysTimer = Timer.periodic(const Duration(minutes: 1), (_) {
-      _refreshDays();
-    });
+    _scheduleDayRollover();
   }
 
   @override
@@ -67,7 +65,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _refreshDays();
+    if (state == AppLifecycleState.resumed) {
+      _refreshDays();
+      _scheduleDayRollover();
+    }
+  }
+
+  DateTime _nextMidnight() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day + 1)
+        .add(const Duration(seconds: 1));
+  }
+
+  void _scheduleDayRollover() {
+    _daysTimer?.cancel();
+    final delay = _nextMidnight().difference(DateTime.now());
+    _daysTimer = Timer(delay, () {
+      _refreshDays();
+      _scheduleDayRollover();
+    });
   }
 
   void _refreshDays() {
