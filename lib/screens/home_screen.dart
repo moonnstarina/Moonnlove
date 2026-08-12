@@ -29,7 +29,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final _authService = AuthService();
   final _partnerService = PartnerService();
 
@@ -39,22 +39,42 @@ class _HomeScreenState extends State<HomeScreen> {
   int _days = 0;
   String _sinceText = '';
   String? _partnerUid;
+  DateTime? _sinceDate;
+  Timer? _daysTimer;
   StreamSubscription<DatabaseEvent>? _userListener;
   StreamSubscription<DatabaseEvent>? _partnerListener;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadUserData();
     _listenUserData();
     _loadTimeTogether();
+    _daysTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      _refreshDays();
+    });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _daysTimer?.cancel();
     _userListener?.cancel();
     _partnerListener?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _refreshDays();
+  }
+
+  void _refreshDays() {
+    final since = _sinceDate;
+    if (since == null || !mounted) return;
+    final days = DateTime.now().difference(since).inDays;
+    if (days != _days) setState(() => _days = days);
   }
 
   Future<void> _loadUserData() async {
@@ -129,6 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final resolved = since;
     if (resolved == null || !mounted) return;
     setState(() {
+      _sinceDate = resolved;
       _days = DateTime.now().difference(resolved).inDays;
       _sinceText = _formatDate(resolved);
     });
