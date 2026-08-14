@@ -1,3 +1,6 @@
+import '../providers/app_palette.dart';
+import '../providers/theme_provider.dart';
+import 'package:provider/provider.dart';
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -6,16 +9,16 @@ import 'package:firebase_database/firebase_database.dart';
 import '../services/auth_service.dart';
 import '../services/partner_service.dart';
 
-const Color _background = Color(0xFFF8F9FA);
-const Color _primary = Color(0xFF964549);
-const Color _primaryContainer = Color(0xFFFF999C);
-const Color _onPrimaryContainer = Color(0xFF792E33);
-const Color _onSurface = Color(0xFF191C1D);
-const Color _onSurfaceVariant = Color(0xFF544242);
-const Color _surfaceLowest = Color(0xFFFFFFFF);
-const Color _surfaceContainer = Color(0xFFEDEEEF);
-const Color _surfaceContainerHigh = Color(0xFFE7E8E9);
-const Color _secondaryContainer = Color(0xFFF1DEDE);
+Color get _background => AppPalette.background;
+Color get _primary => AppPalette.primary;
+Color get _primaryContainer => AppPalette.primaryContainer;
+Color get _onPrimaryContainer => AppPalette.onPrimaryContainer;
+Color get _onSurface => AppPalette.onSurface;
+Color get _onSurfaceVariant => AppPalette.onSurfaceVariant;
+Color get _surfaceLowest => AppPalette.surfaceLowest;
+Color get _surfaceContainer => AppPalette.surfaceContainer;
+Color get _surfaceContainerHigh => AppPalette.surfaceContainerHigh;
+Color get _secondaryContainer => AppPalette.secondaryContainer;
 
 class LocationScreen extends StatefulWidget {
   const LocationScreen({super.key});
@@ -162,6 +165,7 @@ class _LocationScreenState extends State<LocationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: _background,
       body: SafeArea(
@@ -187,7 +191,7 @@ class _LocationScreenState extends State<LocationScreen> {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          const Text(
+          Text(
             'Lokasi',
             style: TextStyle(
               fontSize: 20,
@@ -199,7 +203,7 @@ class _LocationScreenState extends State<LocationScreen> {
             alignment: Alignment.centerRight,
             child: IconButton(
               onPressed: _load,
-              icon: const Icon(
+              icon: Icon(
                 Icons.refresh_rounded,
                 color: _onSurfaceVariant,
               ),
@@ -229,7 +233,7 @@ class _LocationScreenState extends State<LocationScreen> {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Fitur lokasi hanya tersedia setelah terhubung dengan pasangan',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: _onSurfaceVariant),
@@ -274,7 +278,7 @@ class _LocationScreenState extends State<LocationScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [_primary, Color(0xFFB96B6E)],
@@ -347,7 +351,7 @@ class _LocationScreenState extends State<LocationScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Status Lokasi',
             style: TextStyle(
               fontSize: 16,
@@ -405,7 +409,7 @@ class _LocationScreenState extends State<LocationScreen> {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: _onSurface,
@@ -414,7 +418,7 @@ class _LocationScreenState extends State<LocationScreen> {
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   color: _onSurfaceVariant,
                 ),

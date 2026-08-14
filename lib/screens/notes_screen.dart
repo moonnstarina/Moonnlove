@@ -1,39 +1,42 @@
+import '../providers/app_palette.dart';
+import '../providers/theme_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 
 import 'music_player_screen.dart';
 
-const Color _background = Color(0xFFF8F9FA);
-const Color _primary = Color(0xFF964549);
-const Color _primaryContainer = Color(0xFFFF999C);
-const Color _onPrimaryContainer = Color(0xFF792E33);
-const Color _onSurface = Color(0xFF191C1D);
-const Color _onSurfaceVariant = Color(0xFF544242);
-const Color _surfaceContainerLowest = Color(0xFFFFFFFF);
-const Color _surfaceContainer = Color(0xFFEDEEEF);
-const Color _tertiary = Color(0xFF6E595A);
-const Color _tertiaryFixed = Color(0xFFF9DCDC);
-const Color _onTertiaryFixed = Color(0xFF271818);
-const Color _onTertiaryFixedVariant = Color(0xFF554242);
-const Color _tertiaryContainer = Color(0xFFCAAFAF);
-const Color _secondary = Color(0xFF695B5B);
-const Color _secondaryContainer = Color(0xFFF1DEDE);
-const Color _primaryFixed = Color(0xFFFFDAD9);
-const Color _outline = Color(0xFF877272);
-const Color _inverseSurface = Color(0xFF2E3132);
-const Color _inversePrimary = Color(0xFFFFB3B4);
-const Color _inverseOnSurface = Color(0xFFF0F1F2);
+Color get _background => AppPalette.background;
+Color get _primary => AppPalette.primary;
+Color get _primaryContainer => AppPalette.primaryContainer;
+Color get _onPrimaryContainer => AppPalette.onPrimaryContainer;
+Color get _onSurface => AppPalette.onSurface;
+Color get _onSurfaceVariant => AppPalette.onSurfaceVariant;
+Color get _surfaceContainerLowest => AppPalette.surfaceContainerLowest;
+Color get _surfaceContainer => AppPalette.surfaceContainer;
+Color get _tertiary => AppPalette.tertiary;
+Color get _tertiaryFixed => AppPalette.tertiaryFixed;
+Color get _onTertiaryFixed => AppPalette.onTertiaryFixed;
+Color get _onTertiaryFixedVariant => AppPalette.onTertiaryFixedVariant;
+Color get _tertiaryContainer => AppPalette.tertiaryContainer;
+Color get _secondary => AppPalette.secondary;
+Color get _secondaryContainer => AppPalette.secondaryContainer;
+Color get _primaryFixed => AppPalette.primaryFixed;
+Color get _outline => AppPalette.outline;
+Color get _inverseSurface => AppPalette.inverseSurface;
+Color get _inversePrimary => AppPalette.inversePrimary;
+Color get _inverseOnSurface => AppPalette.inverseOnSurface;
 
-const _softShadow = [
+get _softShadow => [
   BoxShadow(
-    color: Color(0x0A964549),
+    color: _primary.withOpacity(0.04),
     blurRadius: 20,
     offset: Offset(0, 4),
   ),
 ];
 
-const _interactiveShadow = [
+get _interactiveShadow => [
   BoxShadow(
-    color: Color(0x14964549),
+    color: _primary.withOpacity(0.08),
     blurRadius: 20,
     offset: Offset(0, 4),
   ),
@@ -47,7 +50,7 @@ class NotesScreen extends StatefulWidget {
 }
 
 class _NotesScreenState extends State<NotesScreen> {
-  static const _notes = [
+  static get _notes => [
     (
       title: 'Song for rainy days',
       desc:
@@ -114,6 +117,7 @@ class _NotesScreenState extends State<NotesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: _background,
       body: SafeArea(
@@ -153,7 +157,7 @@ class _NotesScreenState extends State<NotesScreen> {
               Container(
                 width: 40,
                 height: 40,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: _surfaceContainer,
                   shape: BoxShape.circle,
                 ),
@@ -161,7 +165,7 @@ class _NotesScreenState extends State<NotesScreen> {
                 child: Image.asset(
                   'assets/images/nav_avatar.jpg',
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Icon(
+                  errorBuilder: (_, __, ___) => Icon(
                     Icons.person,
                     color: _onSurfaceVariant,
                     size: 22,
@@ -171,7 +175,7 @@ class _NotesScreenState extends State<NotesScreen> {
               const Spacer(),
               IconButton(
                 onPressed: () {},
-                icon: const Icon(
+                icon: Icon(
                   Icons.notifications_rounded,
                   color: _primary,
                   size: 26,
@@ -182,7 +186,7 @@ class _NotesScreenState extends State<NotesScreen> {
               ),
             ],
           ),
-          const Text(
+          Text(
             'MoonLove',
             style: TextStyle(
               fontSize: 20,
@@ -201,18 +205,18 @@ class _NotesScreenState extends State<NotesScreen> {
         Container(
           width: 48,
           height: 48,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: _primaryContainer,
             shape: BoxShape.circle,
           ),
-          child: const Icon(
+          child: Icon(
             Icons.music_note_rounded,
             color: _onPrimaryContainer,
             size: 24,
           ),
         ),
         const SizedBox(width: 12),
-        const Text(
+        Text(
           'Our Playlist',
           style: TextStyle(
             fontSize: 32,
@@ -229,7 +233,7 @@ class _NotesScreenState extends State<NotesScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Shared Notes',
           style: TextStyle(
             fontSize: 20,
@@ -330,7 +334,7 @@ class _NotesScreenState extends State<NotesScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'Top Tracks',
               style: TextStyle(
                 fontSize: 20,
@@ -340,7 +344,7 @@ class _NotesScreenState extends State<NotesScreen> {
             ),
             TextButton(
               onPressed: () {},
-              child: const Text(
+              child: Text(
                 'View All',
                 style: TextStyle(
                   fontSize: 12,
@@ -390,7 +394,7 @@ class _NotesScreenState extends State<NotesScreen> {
                 Image.asset(
                   track.cover,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Icon(
+                  errorBuilder: (_, __, ___) => Icon(
                     Icons.music_note_rounded,
                     color: _onSurfaceVariant,
                     size: 24,
@@ -520,7 +524,7 @@ class _NotesScreenState extends State<NotesScreen> {
                     child: Image.asset(
                       'assets/images/cover2.jpg',
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(
+                      errorBuilder: (_, __, ___) => Icon(
                         Icons.music_note_rounded,
                         color: _onSurfaceVariant,
                       ),
@@ -531,7 +535,7 @@ class _NotesScreenState extends State<NotesScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Lover',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -555,7 +559,7 @@ class _NotesScreenState extends State<NotesScreen> {
                   ),
                   IconButton(
                     onPressed: () {},
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.skip_previous_rounded,
                       color: _inverseOnSurface,
                     ),
@@ -565,7 +569,7 @@ class _NotesScreenState extends State<NotesScreen> {
                     child: Container(
                       width: 48,
                       height: 48,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: _inversePrimary,
                         shape: BoxShape.circle,
                       ),
@@ -579,7 +583,7 @@ class _NotesScreenState extends State<NotesScreen> {
                   ),
                   IconButton(
                     onPressed: () {},
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.skip_next_rounded,
                       color: _inverseOnSurface,
                     ),

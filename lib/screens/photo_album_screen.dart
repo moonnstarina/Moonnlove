@@ -1,3 +1,6 @@
+import '../providers/app_palette.dart';
+import '../providers/theme_provider.dart';
+import 'package:provider/provider.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -6,14 +9,14 @@ import '../services/auth_service.dart';
 import '../services/partner_service.dart';
 import 'photo_detail_screen.dart';
 
-const Color _background = Color(0xFFF8F9FA);
-const Color _primary = Color(0xFF964549);
-const Color _primaryContainer = Color(0xFFFF999C);
-const Color _onPrimaryContainer = Color(0xFF792E33);
-const Color _onSurface = Color(0xFF191C1D);
-const Color _onSurfaceVariant = Color(0xFF544242);
-const Color _surfaceLowest = Color(0xFFFFFFFF);
-const Color _surfaceContainer = Color(0xFFEDEEEF);
+Color get _background => AppPalette.background;
+Color get _primary => AppPalette.primary;
+Color get _primaryContainer => AppPalette.primaryContainer;
+Color get _onPrimaryContainer => AppPalette.onPrimaryContainer;
+Color get _onSurface => AppPalette.onSurface;
+Color get _onSurfaceVariant => AppPalette.onSurfaceVariant;
+Color get _surfaceLowest => AppPalette.surfaceLowest;
+Color get _surfaceContainer => AppPalette.surfaceContainer;
 
 const List<String> _tabs = ['All', 'Photos', 'Videos', 'Places'];
 
@@ -67,7 +70,7 @@ class _PhotoAlbumScreenState extends State<PhotoAlbumScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Center(
+              Center(
                 child: Text(
                   'Upload Foto',
                   style: TextStyle(
@@ -138,7 +141,7 @@ class _PhotoAlbumScreenState extends State<PhotoAlbumScreen> {
               const SizedBox(width: 16),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color: _onSurface,
@@ -162,6 +165,7 @@ class _PhotoAlbumScreenState extends State<PhotoAlbumScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: _background,
       floatingActionButton: _paired
@@ -222,7 +226,7 @@ class _PhotoAlbumScreenState extends State<PhotoAlbumScreen> {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Album hanya tersedia setelah terhubung dengan pasangan',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: _onSurfaceVariant),
@@ -252,7 +256,7 @@ class _PhotoAlbumScreenState extends State<PhotoAlbumScreen> {
       child: Row(
         children: [
           const SizedBox(width: 24),
-          const Expanded(
+          Expanded(
             child: Center(
               child: Text(
                 'Post a Picture',
@@ -361,7 +365,7 @@ class _PhotoAlbumScreenState extends State<PhotoAlbumScreen> {
                           ? child
                           : Container(
                               color: _surfaceContainer,
-                              child: const Center(
+                              child: Center(
                                 child: SizedBox(
                                   width: 22,
                                   height: 22,
@@ -425,7 +429,7 @@ class _PhotoAlbumScreenState extends State<PhotoAlbumScreen> {
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           'Tekan tombol + untuk upload momen pertama kalian',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 13, color: _onSurfaceVariant),

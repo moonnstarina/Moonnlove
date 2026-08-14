@@ -1,3 +1,4 @@
+import '../providers/app_palette.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -6,19 +7,19 @@ import '../providers/theme_provider.dart';
 import '../services/auth_service.dart';
 import '../services/partner_service.dart';
 
-const Color _background = Color(0xFFF8F9FA);
-const Color _primary = Color(0xFF964549);
-const Color _primaryContainer = Color(0xFFFF999C);
-const Color _primaryFixed = Color(0xFFFFDAD9);
-const Color _onSurface = Color(0xFF191C1D);
-const Color _onSurfaceVariant = Color(0xFF544242);
-const Color _outline = Color(0xFF877272);
-const Color _surfaceLowest = Color(0xFFFFFFFF);
-const Color _surfaceContainer = Color(0xFFEDEEEF);
-const Color _secondary = Color(0xFF695B5B);
-const Color _secondaryContainer = Color(0xFFF1DEDE);
-const Color _tertiary = Color(0xFF6E595A);
-const Color _tertiaryContainer = Color(0xFFCAAFAF);
+Color get _background => AppPalette.background;
+Color get _primary => AppPalette.primary;
+Color get _primaryContainer => AppPalette.primaryContainer;
+Color get _primaryFixed => AppPalette.primaryFixed;
+Color get _onSurface => AppPalette.onSurface;
+Color get _onSurfaceVariant => AppPalette.onSurfaceVariant;
+Color get _outline => AppPalette.outline;
+Color get _surfaceLowest => AppPalette.surfaceLowest;
+Color get _surfaceContainer => AppPalette.surfaceContainer;
+Color get _secondary => AppPalette.secondary;
+Color get _secondaryContainer => AppPalette.secondaryContainer;
+Color get _tertiary => AppPalette.tertiary;
+Color get _tertiaryContainer => AppPalette.tertiaryContainer;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.onNavigateToTab});
@@ -257,7 +258,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   coupleName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                     color: _primary,
@@ -265,7 +266,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
                 Text(
                   _paired ? 'Online' : 'Belum terhubung',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: _onSurfaceVariant,
@@ -276,7 +277,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
           GestureDetector(
             onTap: _showComingSoon,
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.all(4),
               child: Icon(
                 Icons.notifications_rounded,
@@ -336,7 +337,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return Image.asset(
       'assets/images/hero.jpg',
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => const Icon(
+      errorBuilder: (_, __, ___) => Icon(
         Icons.favorite,
         size: 80,
         color: _primary,
@@ -375,7 +376,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Our Time Together',
                 style: TextStyle(
                   fontSize: 16,
@@ -390,14 +391,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 children: [
                   Text(
                     '$_days',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.w700,
                       color: _primary,
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Text(
+                  Text(
                     'Days',
                     style: TextStyle(
                       fontSize: 20,
@@ -412,7 +413,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 _paired && _sinceText.isNotEmpty
                     ? 'Since $_sinceText'
                     : 'Hubungkan pasangan dulu',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: _outline,
@@ -484,7 +485,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             children: [
               _buildQuickActionTile(item, primaryColor),
               if (i != items.length - 1)
-                const Divider(
+                Divider(
                   height: 1,
                   thickness: 1,
                   color: _surfaceContainer,
@@ -524,7 +525,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             Expanded(
               child: Text(
                 item.label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                   color: _onSurface,
@@ -532,7 +533,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ),
             ),
             if (item.more)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(right: 4),
                 child: Text(
                   'More',
@@ -543,7 +544,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ),
                 ),
               ),
-            const Icon(Icons.chevron_right_rounded, color: _onSurfaceVariant),
+            Icon(Icons.chevron_right_rounded, color: _onSurfaceVariant),
           ],
         ),
       ),

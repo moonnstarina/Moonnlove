@@ -1,16 +1,19 @@
+import '../providers/app_palette.dart';
+import '../providers/theme_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import '../services/auth_service.dart';
 import '../services/partner_service.dart';
 
-const Color _background = Color(0xFFF8F9FA);
-const Color _primary = Color(0xFF964549);
-const Color _primaryContainer = Color(0xFFFF999C);
-const Color _onPrimaryContainer = Color(0xFF792E33);
-const Color _onSurface = Color(0xFF191C1D);
-const Color _onSurfaceVariant = Color(0xFF544242);
-const Color _surfaceContainerLow = Color(0xFFF3F4F5);
-const Color _outlineVariant = Color(0xFFDAC1C0);
+Color get _background => AppPalette.background;
+Color get _primary => AppPalette.primary;
+Color get _primaryContainer => AppPalette.primaryContainer;
+Color get _onPrimaryContainer => AppPalette.onPrimaryContainer;
+Color get _onSurface => AppPalette.onSurface;
+Color get _onSurfaceVariant => AppPalette.onSurfaceVariant;
+Color get _surfaceContainerLow => AppPalette.surfaceContainerLow;
+Color get _outlineVariant => AppPalette.outlineVariant;
 
 class PhotoDetailScreen extends StatefulWidget {
   const PhotoDetailScreen({
@@ -55,7 +58,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFFFFFFFF),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text(
+        title: Text(
           'Edit Caption',
           style: TextStyle(fontWeight: FontWeight.w700, color: _onSurface),
         ),
@@ -63,10 +66,10 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
           controller: controller,
           maxLines: 3,
           maxLength: 200,
-          style: const TextStyle(color: _onSurface),
+          style: TextStyle(color: _onSurface),
           decoration: InputDecoration(
             hintText: 'Tulis caption...',
-            hintStyle: const TextStyle(color: _onSurfaceVariant),
+            hintStyle: TextStyle(color: _onSurfaceVariant),
             filled: true,
             fillColor: _surfaceContainerLow,
             border: OutlineInputBorder(
@@ -78,7 +81,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
+            child: Text(
               'Batal',
               style: TextStyle(color: _onSurfaceVariant),
             ),
@@ -103,6 +106,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: _background,
       body: SafeArea(
@@ -159,7 +163,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       child: Container(
         width: 40,
         height: 40,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: _surfaceContainerLow,
           shape: BoxShape.circle,
         ),
@@ -202,7 +206,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                       ? child
                       : Container(
                           color: _surfaceContainerLow,
-                          child: const Center(
+                          child: Center(
                             child: CircularProgressIndicator(color: _primary),
                           ),
                         ),
@@ -309,7 +313,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
         children: [
           Text(
             caption.isEmpty ? 'Momen kita 💕' : caption,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w700,
               color: _onSurface,
@@ -319,7 +323,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.calendar_month_rounded,
                   size: 16,
                   color: _onSurfaceVariant,
@@ -327,7 +331,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                 const SizedBox(width: 4),
                 Text(
                   _formatDate(timestamp),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     color: _onSurfaceVariant,
                   ),
@@ -339,7 +343,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
           if (caption.isNotEmpty) ...[
             Text(
               caption,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 height: 1.5,
                 color: _onSurfaceVariant,
@@ -347,7 +351,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
             ),
             const SizedBox(height: 16),
           ],
-          const Divider(height: 1, thickness: 1, color: _outlineVariant),
+          Divider(height: 1, thickness: 1, color: _outlineVariant),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -366,7 +370,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
               ),
             ],
           ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Divider(height: 1, thickness: 1, color: _outlineVariant),
           ),
@@ -378,11 +382,11 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                 Container(
                   width: 32,
                   height: 32,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: _primaryContainer,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.person_rounded,
                     size: 18,
                     color: _onPrimaryContainer,

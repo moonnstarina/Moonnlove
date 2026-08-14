@@ -1,13 +1,17 @@
+import '../providers/app_palette.dart';
+import '../providers/theme_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'chat_screen.dart';
 import 'photo_album_screen.dart';
 import 'game_screen.dart';
 import 'settings_screen.dart';
-const Color _surfaceLowest = Color(0xFFFFFFFF);
-const Color _primaryContainer = Color(0xFFFF999C);
-const Color _onPrimaryContainer = Color(0xFF792E33);
-const Color _onSurfaceVariant = Color(0xFF544242);
+Color get _surfaceLowest => AppPalette.surfaceLowest;
+Color get _primary => AppPalette.primary;
+Color get _primaryContainer => AppPalette.primaryContainer;
+Color get _onPrimaryContainer => AppPalette.onPrimaryContainer;
+Color get _onSurfaceVariant => AppPalette.onSurfaceVariant;
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -31,6 +35,7 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       body: IndexedStack(index: _index, children: _tabs),
       bottomNavigationBar: _BottomNav(index: _index, onTap: _onNavigate),
@@ -54,13 +59,14 @@ class _BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Container(
       decoration: BoxDecoration(
         color: _surfaceLowest,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF964549).withOpacity(0.04),
+            color: _primary.withOpacity(0.04),
             blurRadius: 20,
             offset: const Offset(0, -4),
           ),

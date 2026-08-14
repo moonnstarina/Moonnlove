@@ -1,3 +1,6 @@
+import '../providers/app_palette.dart';
+import '../providers/theme_provider.dart';
+import 'package:provider/provider.dart';
 import 'dart:async';
 
 import 'package:firebase_database/firebase_database.dart';
@@ -5,21 +8,21 @@ import 'package:flutter/material.dart';
 import '../services/game_detector_service.dart';
 import '../services/partner_service.dart';
 
-const Color _background = Color(0xFFF8F9FA);
-const Color _primary = Color(0xFF964549);
-const Color _primaryContainer = Color(0xFFFF999C);
-const Color _onPrimaryContainer = Color(0xFF792E33);
-const Color _onPrimary = Color(0xFFFFFFFF);
-const Color _onSurface = Color(0xFF191C1D);
-const Color _onSurfaceVariant = Color(0xFF544242);
-const Color _surfaceLowest = Color(0xFFFFFFFF);
-const Color _surfaceContainerHigh = Color(0xFFE7E8E9);
-const Color _surfaceContainerLow = Color(0xFFF3F4F5);
-const Color _outlineVariant = Color(0xFFDAC1C0);
-const Color _secondary = Color(0xFF695B5B);
-const Color _secondaryContainer = Color(0xFFF1DEDE);
-const Color _tertiary = Color(0xFF6E595A);
-const Color _tertiaryContainer = Color(0xFFCAAFAF);
+Color get _background => AppPalette.background;
+Color get _primary => AppPalette.primary;
+Color get _primaryContainer => AppPalette.primaryContainer;
+Color get _onPrimaryContainer => AppPalette.onPrimaryContainer;
+Color get _onPrimary => AppPalette.onPrimary;
+Color get _onSurface => AppPalette.onSurface;
+Color get _onSurfaceVariant => AppPalette.onSurfaceVariant;
+Color get _surfaceLowest => AppPalette.surfaceLowest;
+Color get _surfaceContainerHigh => AppPalette.surfaceContainerHigh;
+Color get _surfaceContainerLow => AppPalette.surfaceContainerLow;
+Color get _outlineVariant => AppPalette.outlineVariant;
+Color get _secondary => AppPalette.secondary;
+Color get _secondaryContainer => AppPalette.secondaryContainer;
+Color get _tertiary => AppPalette.tertiary;
+Color get _tertiaryContainer => AppPalette.tertiaryContainer;
 
 class _GameInfo {
   _GameInfo({
@@ -90,8 +93,8 @@ class _GameScreenState extends State<GameScreen>
               icon: Icons.sports_esports_rounded,
               title: raw['name']?.toString() ?? 'Game',
               color: _primary,
-              bg: const Color(0x33FF999C),
-              glow: const Color(0x1AFF999C),
+              bg: _primaryContainer.withOpacity(0.2),
+              glow: _primaryContainer.withOpacity(0.1),
               firebaseKey: key.toString(),
               package: raw['package']?.toString(),
             ));
@@ -199,6 +202,7 @@ class _GameScreenState extends State<GameScreen>
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: _background,
       body: SafeArea(
@@ -211,7 +215,7 @@ class _GameScreenState extends State<GameScreen>
                 children: [
                   _buildHero(),
                   const SizedBox(height: 32),
-                  const Text(
+                  Text(
                     'Time to Play!',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -222,7 +226,7 @@ class _GameScreenState extends State<GameScreen>
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Have fun together and discover new things about each other.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -261,9 +265,9 @@ class _GameScreenState extends State<GameScreen>
       ),
       child: Row(
         children: [
-          const Icon(Icons.visibility_rounded, color: _onPrimaryContainer),
+          Icon(Icons.visibility_rounded, color: _onPrimaryContainer),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
               'Izinkan akses penggunaan aplikasi untuk mendeteksi game yang sedang dimainkan.',
               style: TextStyle(
@@ -282,7 +286,7 @@ class _GameScreenState extends State<GameScreen>
                 color: _primary,
                 borderRadius: BorderRadius.circular(999),
               ),
-              child: const Text(
+              child: Text(
                 'Izinkan',
                 style: TextStyle(
                   fontSize: 12,
@@ -316,7 +320,7 @@ class _GameScreenState extends State<GameScreen>
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.arrow_back_rounded,
                   color: _onSurface,
                   size: 24,
@@ -324,7 +328,7 @@ class _GameScreenState extends State<GameScreen>
               ),
             ),
           ),
-          const Text(
+          Text(
             'Game',
             style: TextStyle(
               fontSize: 20,
@@ -340,7 +344,7 @@ class _GameScreenState extends State<GameScreen>
                 color: _surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(999),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
@@ -383,12 +387,12 @@ class _GameScreenState extends State<GameScreen>
             child: Stack(
               fit: StackFit.expand,
               children: [
-                const DecoratedBox(
+                DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [Color(0x33FF999C), _surfaceLowest],
+                      colors: [_primaryContainer.withOpacity(0.2), _surfaceLowest],
                     ),
                   ),
                 ),
@@ -456,7 +460,7 @@ class _GameScreenState extends State<GameScreen>
                         game.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: _onSurface,
@@ -532,18 +536,18 @@ class _GameScreenState extends State<GameScreen>
           Container(
             width: 72,
             height: 72,
-            decoration: const BoxDecoration(
-              color: Color(0x33FF999C),
+            decoration: BoxDecoration(
+              color: _primaryContainer.withOpacity(0.2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.sports_esports_rounded,
               color: _primary,
               size: 36,
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Belum ada game',
             style: TextStyle(
               fontSize: 18,
@@ -552,7 +556,7 @@ class _GameScreenState extends State<GameScreen>
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Tambah game yang kalian mainkan bareng, list-nya otomatis muncul di HP pasanganmu.',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -579,13 +583,13 @@ class _GameScreenState extends State<GameScreen>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.add_circle_rounded,
               color: _onSurfaceVariant,
               size: 20,
             ),
             const SizedBox(width: 8),
-            const Text(
+            Text(
               'Tambah Game',
               style: TextStyle(
                 fontSize: 12,
@@ -616,7 +620,7 @@ class _GameScreenState extends State<GameScreen>
             backgroundColor: const Color(0xFFFFFFFF),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: const Text(
+            title: Text(
               'Tambah Game',
               style: TextStyle(fontWeight: FontWeight.w700, color: _onSurface),
             ),
@@ -625,7 +629,7 @@ class _GameScreenState extends State<GameScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Align(
+                  Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
                       'Pilih game yang terpasang di HP-mu',
@@ -638,11 +642,11 @@ class _GameScreenState extends State<GameScreen>
                   const SizedBox(height: 12),
                   TextField(
                     controller: controller,
-                    style: const TextStyle(color: _onSurface),
+                    style: TextStyle(color: _onSurface),
                     decoration: InputDecoration(
                       hintText: 'Cari game...',
-                      hintStyle: const TextStyle(color: _onSurfaceVariant),
-                      prefixIcon: const Icon(
+                      hintStyle: TextStyle(color: _onSurfaceVariant),
+                      prefixIcon: Icon(
                         Icons.search_rounded,
                         color: _onSurfaceVariant,
                         size: 20,
@@ -659,7 +663,7 @@ class _GameScreenState extends State<GameScreen>
                   const SizedBox(height: 12),
                   Flexible(
                     child: installed.isEmpty
-                        ? const Padding(
+                        ? Padding(
                             padding: EdgeInsets.all(24),
                             child: Text(
                               'Gagal memuat daftar app dari HP.',
@@ -671,7 +675,7 @@ class _GameScreenState extends State<GameScreen>
                             ),
                           )
                         : filtered.isEmpty
-                            ? const Padding(
+                            ? Padding(
                                 padding: EdgeInsets.all(24),
                                 child: Text(
                                   'Tidak ada game yang cocok.',
@@ -695,7 +699,7 @@ class _GameScreenState extends State<GameScreen>
                                     leading: CircleAvatar(
                                       radius: 16,
                                       backgroundColor: _surfaceContainerLow,
-                                      child: const Icon(
+                                      child: Icon(
                                         Icons.sports_esports_rounded,
                                         color: _primary,
                                         size: 18,
@@ -705,7 +709,7 @@ class _GameScreenState extends State<GameScreen>
                                       app.label,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
                                         color: _onSurface,
@@ -715,7 +719,7 @@ class _GameScreenState extends State<GameScreen>
                                       app.package,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 11,
                                         color: _onSurfaceVariant,
                                       ),
@@ -734,7 +738,7 @@ class _GameScreenState extends State<GameScreen>
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text(
+                child: Text(
                   'Batal',
                   style: TextStyle(color: _onSurfaceVariant),
                 ),
@@ -780,16 +784,16 @@ class _GameScreenState extends State<GameScreen>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(
           'Hapus ${game.title}?',
-          style: const TextStyle(fontWeight: FontWeight.w700, color: _onSurface),
+          style: TextStyle(fontWeight: FontWeight.w700, color: _onSurface),
         ),
-        content: const Text(
+        content: Text(
           'Game akan dihapus dari daftar bareng untuk kalian berdua.',
           style: TextStyle(color: _onSurfaceVariant),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text(
+            child: Text(
               'Batal',
               style: TextStyle(color: _onSurfaceVariant),
             ),

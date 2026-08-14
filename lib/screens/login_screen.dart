@@ -1,13 +1,16 @@
+import '../providers/app_palette.dart';
+import '../providers/theme_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 
-const Color _bg = Color(0xFFF8F9FA);
-const Color _primary = Color(0xFF964549);
-const Color _primaryContainer = Color(0xFFFF999C);
-const Color _onSurface = Color(0xFF191C1D);
-const Color _onSurfaceVariant = Color(0xFF544242);
-const Color _surfaceLowest = Color(0xFFFFFFFF);
-const Color _outlineVariant = Color(0xFFDAC1C0);
+Color get _bg => AppPalette.background;
+Color get _primary => AppPalette.primary;
+Color get _primaryContainer => AppPalette.primaryContainer;
+Color get _onSurface => AppPalette.onSurface;
+Color get _onSurfaceVariant => AppPalette.onSurfaceVariant;
+Color get _surfaceLowest => AppPalette.surfaceLowest;
+Color get _outlineVariant => AppPalette.outlineVariant;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -93,6 +96,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: _bg,
       body: Stack(
@@ -250,7 +254,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       controller: controller,
       obscureText: obscure,
       keyboardType: keyboardType,
-      style: const TextStyle(color: _onSurface, fontSize: 14),
+      style: TextStyle(color: _onSurface, fontSize: 14),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: _onSurfaceVariant.withOpacity(0.6), fontSize: 14),
@@ -283,12 +287,13 @@ class _Branding extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
+            Text(
               'LoveNest',
               style: TextStyle(
                 fontSize: 32,
@@ -309,12 +314,12 @@ class _Branding extends StatelessWidget {
                   weight: 70,
                 ),
               ]).animate(heartController),
-              child: const Icon(Icons.favorite, color: _primaryContainer, size: 28),
+              child: Icon(Icons.favorite, color: _primaryContainer, size: 28),
             ),
           ],
         ),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           'Tempat kecil kita, untuk cinta yang besar.',
           textAlign: TextAlign.center,
           style: TextStyle(
@@ -335,6 +340,7 @@ class _Illustration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return SizedBox(
       height: 200,
       child: Stack(
@@ -409,6 +415,7 @@ class _FloatingHeart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return AnimatedBuilder(
       animation: controller,
       builder: (context, child) {
@@ -437,9 +444,10 @@ class _WelcomeText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Column(
       children: [
-        const Text(
+        Text(
           'Selamat Datang di LoveNest',
           textAlign: TextAlign.center,
           style: TextStyle(
@@ -509,6 +517,7 @@ class _BackgroundDecor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return IgnorePointer(
       child: Stack(
         children: [
@@ -541,6 +550,7 @@ class _Blob extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Container(
       width: size,
       height: size,

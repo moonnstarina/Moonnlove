@@ -1,3 +1,4 @@
+import '../providers/app_palette.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -7,16 +8,16 @@ import '../providers/theme_provider.dart';
 import '../services/auth_service.dart';
 import '../services/partner_service.dart';
 
-const Color _background = Color(0xFFF8F9FA);
-const Color _surfaceContainer = Color(0xFFEDEEEF);
-const Color _surfaceContainerHigh = Color(0xFFE7E8E9);
-const Color _surfaceVariant = Color(0xFFE1E3E4);
-const Color _outlineVariant = Color(0xFFDAC1C0);
-const Color _primary = Color(0xFF964549);
-const Color _primaryContainer = Color(0xFFFF999C);
-const Color _onPrimaryContainer = Color(0xFF792E33);
-const Color _onSurface = Color(0xFF191C1D);
-const Color _onSurfaceVariant = Color(0xFF544242);
+Color get _background => AppPalette.background;
+Color get _surfaceContainer => AppPalette.surfaceContainer;
+Color get _surfaceContainerHigh => AppPalette.surfaceContainerHigh;
+Color get _surfaceVariant => AppPalette.surfaceVariant;
+Color get _outlineVariant => AppPalette.outlineVariant;
+Color get _primary => AppPalette.primary;
+Color get _primaryContainer => AppPalette.primaryContainer;
+Color get _onPrimaryContainer => AppPalette.onPrimaryContainer;
+Color get _onSurface => AppPalette.onSurface;
+Color get _onSurfaceVariant => AppPalette.onSurfaceVariant;
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -190,7 +191,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return Container(
       decoration: BoxDecoration(
         color: _background.withOpacity(0.95),
-        border: const Border(
+        border: Border(
           bottom: BorderSide(color: _surfaceVariant, width: 0.5),
         ),
       ),
@@ -254,14 +255,14 @@ class _ChatScreenState extends State<ChatScreen> {
                           children: [
                             Text(
                               _partnerName ?? 'Partner',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w700,
                                 color: _onSurface,
                               ),
                             ),
                             const SizedBox(width: 4),
-                            const Text(
+                            Text(
                               '♥',
                               style: TextStyle(
                                 fontSize: 14,
@@ -270,7 +271,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             ),
                           ],
                         ),
-                        const Text(
+                        Text(
                           'Online',
                           style: TextStyle(
                             fontSize: 12,
@@ -397,7 +398,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: _onSurfaceVariant,
@@ -470,7 +471,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   Text(
                     timeText,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
                       color: _onSurfaceVariant,
                     ),
@@ -520,7 +521,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 child: Text(
                   msg['message'] ?? '',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     color: _onPrimaryContainer,
                   ),
@@ -533,7 +534,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   children: [
                     Text(
                       timeText,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
                         color: _onSurfaceVariant,
                       ),
@@ -609,7 +610,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                     child: Text(
                       msg['message'] ?? '',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         color: _onSurface,
                       ),
@@ -619,7 +620,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     padding: const EdgeInsets.only(top: 4, left: 4),
                     child: Text(
                       timeText,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
                         color: _onSurfaceVariant,
                       ),
@@ -670,7 +671,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return Container(
       decoration: BoxDecoration(
         color: _background.withOpacity(0.95),
-        border: const Border(
+        border: Border(
           top: BorderSide(color: _surfaceVariant, width: 0.4),
         ),
         boxShadow: [
@@ -711,11 +712,11 @@ class _ChatScreenState extends State<ChatScreen> {
                         child: TextField(
                           controller: _messageController,
                           focusNode: _focusNode,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             color: _onSurface,
                           ),
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             hintText: 'Type a message...',
                             hintStyle: TextStyle(color: _onSurfaceVariant),
                             border: InputBorder.none,

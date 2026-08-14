@@ -1,3 +1,6 @@
+import '../providers/app_palette.dart';
+import '../providers/theme_provider.dart';
+import 'package:provider/provider.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -9,15 +12,15 @@ import '../services/partner_service.dart';
 import 'account_settings_screen.dart';
 import 'notification_settings_screen.dart';
 
-const Color _background = Color(0xFFF8F9FA);
-const Color _primary = Color(0xFF964549);
-const Color _primaryContainer = Color(0xFFFF999C);
-const Color _onSurface = Color(0xFF191C1D);
-const Color _onSurfaceVariant = Color(0xFF544242);
-const Color _secondaryContainer = Color(0xFFF1DEDE);
-const Color _error = Color(0xFFBA1A1A);
-const Color _errorContainer = Color(0xFFFFDAD6);
-const Color _surfaceVariant = Color(0xFFE1E3E4);
+Color get _background => AppPalette.background;
+Color get _primary => AppPalette.primary;
+Color get _primaryContainer => AppPalette.primaryContainer;
+Color get _onSurface => AppPalette.onSurface;
+Color get _onSurfaceVariant => AppPalette.onSurfaceVariant;
+Color get _secondaryContainer => AppPalette.secondaryContainer;
+Color get _error => AppPalette.error;
+Color get _errorContainer => AppPalette.errorContainer;
+Color get _surfaceVariant => AppPalette.surfaceVariant;
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -225,7 +228,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Ketuk untuk ganti foto',
                 style: TextStyle(fontSize: 12, color: _onSurfaceVariant),
               ),
@@ -300,6 +303,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: _background,
       body: SafeArea(
@@ -358,7 +362,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     : _userName,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                   color: _onSurface,
@@ -366,7 +370,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             const SizedBox(width: 6),
-            const Text(
+            Text(
               '♥',
               style: TextStyle(fontSize: 18, color: _primary),
             ),
@@ -378,7 +382,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ? 'Together since $_sinceText'
               : 'Belum terhubung dengan pasangan',
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 14, color: _onSurfaceVariant),
+          style: TextStyle(fontSize: 14, color: _onSurfaceVariant),
         ),
       ],
     );
@@ -425,13 +429,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _buildMenuTile(
             icon: Icons.language_rounded,
             label: 'Bahasa',
-            trailing: const Text(
+            trailing: Text(
               'Indonesia',
               style: TextStyle(fontSize: 14, color: _onSurfaceVariant),
             ),
             onTap: _comingSoon,
           ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 8),
             child: Divider(height: 1, thickness: 1, color: _surfaceVariant),
           ),
@@ -494,7 +498,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(width: 4),
             ],
             if (showChevron)
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
                 color: _onSurfaceVariant,
               ),

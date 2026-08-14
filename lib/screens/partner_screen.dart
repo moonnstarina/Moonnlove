@@ -1,12 +1,15 @@
+import '../providers/app_palette.dart';
+import '../providers/theme_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/partner_service.dart';
 
-const Color _primary = Color(0xFF964549);
-const Color _onSurface = Color(0xFF191C1D);
-const Color _onSurfaceVariant = Color(0xFF544242);
-const Color _surfaceLowest = Color(0xFFFFFFFF);
-const Color _surfaceVariant = Color(0xFFE1E3E4);
+Color get _primary => AppPalette.primary;
+Color get _onSurface => AppPalette.onSurface;
+Color get _onSurfaceVariant => AppPalette.onSurfaceVariant;
+Color get _surfaceLowest => AppPalette.surfaceLowest;
+Color get _surfaceVariant => AppPalette.surfaceVariant;
 
 class PartnerScreen extends StatefulWidget {
   const PartnerScreen({super.key});
@@ -94,6 +97,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: _surfaceLowest,
       appBar: AppBar(
@@ -133,9 +137,9 @@ class _PartnerScreenState extends State<PartnerScreen> {
       ),
       child: Column(
         children: [
-          const Icon(Icons.favorite, color: _primary, size: 48),
+          Icon(Icons.favorite, color: _primary, size: 48),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'Terhubung dengan pasangan',
             style: TextStyle(
               fontSize: 18,
@@ -146,10 +150,10 @@ class _PartnerScreenState extends State<PartnerScreen> {
           const SizedBox(height: 6),
           Text(
             _partnerName.isEmpty ? 'Partner' : _partnerName,
-            style: const TextStyle(fontSize: 16, color: _primary),
+            style: TextStyle(fontSize: 16, color: _primary),
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'Kamu sudah terhubung, bisa langsung chat, kirim lokasi, dan lainnya.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: _onSurfaceVariant),
@@ -168,7 +172,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
       ),
       child: Column(
         children: [
-          const Text(
+          Text(
             'Kode Kamu',
             style: TextStyle(
               fontSize: 16,
@@ -179,7 +183,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
           const SizedBox(height: 12),
           Text(
             _myCode,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 40,
               fontWeight: FontWeight.w700,
               letterSpacing: 8,
@@ -187,7 +191,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'Kirim kode ini ke pasanganmu',
             style: TextStyle(fontSize: 14, color: _onSurfaceVariant),
           ),
@@ -203,7 +207,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
             label: const Text('Salin Kode'),
             style: OutlinedButton.styleFrom(
               foregroundColor: _primary,
-              side: const BorderSide(color: _primary),
+              side: BorderSide(color: _primary),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(999),
               ),
@@ -218,7 +222,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
+        Text(
           'Masukkan kode pasangan',
           style: TextStyle(
             fontSize: 16,
@@ -232,7 +236,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
           keyboardType: TextInputType.number,
           maxLength: 6,
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 24,
             letterSpacing: 8,
             fontWeight: FontWeight.w700,
@@ -258,7 +262,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _primary, width: 1.5),
+              borderSide: BorderSide(color: _primary, width: 1.5),
             ),
           ),
         ),

@@ -1,24 +1,27 @@
+import '../providers/app_palette.dart';
+import '../providers/theme_provider.dart';
+import 'package:provider/provider.dart';
 import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-const Color _background = Color(0xFFF8F9FA);
-const Color _primary = Color(0xFF964549);
-const Color _primaryContainer = Color(0xFFFF999C);
-const Color _onPrimaryContainer = Color(0xFF792E33);
-const Color _onPrimary = Color(0xFFFFFFFF);
-const Color _onSurface = Color(0xFF191C1D);
-const Color _onSurfaceVariant = Color(0xFF544242);
-const Color _surfaceContainerLowest = Color(0xFFFFFFFF);
-const Color _surfaceContainerHigh = Color(0xFFE7E8E9);
-const Color _surfaceContainerHighest = Color(0xFFE1E3E4);
-const Color _surfaceVariant = Color(0xFFE1E3E4);
-const Color _secondary = Color(0xFF695B5B);
-const Color _secondaryContainer = Color(0xFFF1DEDE);
-const Color _onSecondaryContainer = Color(0xFF6F6161);
-const Color _secondaryFixed = Color(0xFFF1DEDE);
-const Color _outline = Color(0xFF877272);
+Color get _background => AppPalette.background;
+Color get _primary => AppPalette.primary;
+Color get _primaryContainer => AppPalette.primaryContainer;
+Color get _onPrimaryContainer => AppPalette.onPrimaryContainer;
+Color get _onPrimary => AppPalette.onPrimary;
+Color get _onSurface => AppPalette.onSurface;
+Color get _onSurfaceVariant => AppPalette.onSurfaceVariant;
+Color get _surfaceContainerLowest => AppPalette.surfaceContainerLowest;
+Color get _surfaceContainerHigh => AppPalette.surfaceContainerHigh;
+Color get _surfaceContainerHighest => AppPalette.surfaceContainerHighest;
+Color get _surfaceVariant => AppPalette.surfaceVariant;
+Color get _secondary => AppPalette.secondary;
+Color get _secondaryContainer => AppPalette.secondaryContainer;
+Color get _onSecondaryContainer => AppPalette.onSecondaryContainer;
+Color get _secondaryFixed => AppPalette.secondaryFixed;
+Color get _outline => AppPalette.outline;
 
 class MusicPlayerScreen extends StatefulWidget {
   const MusicPlayerScreen({
@@ -104,6 +107,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: _background,
       body: SafeArea(
@@ -152,7 +156,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                 child: Image.asset(
                   'assets/images/player_avatar.jpg',
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Icon(
+                  errorBuilder: (_, __, ___) => Icon(
                     Icons.person,
                     color: _onSurfaceVariant,
                     size: 22,
@@ -162,7 +166,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
               const Spacer(),
               IconButton(
                 onPressed: () {},
-                icon: const Icon(
+                icon: Icon(
                   Icons.notifications_rounded,
                   color: _primary,
                   size: 26,
@@ -173,7 +177,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
               ),
             ],
           ),
-          const Text(
+          Text(
             'MoonLove',
             style: TextStyle(
               fontSize: 20,
@@ -211,7 +215,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                 Image.asset(
                   _track.cover,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Icon(
+                  errorBuilder: (_, __, ___) => Icon(
                     Icons.music_note_rounded,
                     color: _primary,
                     size: 72,
@@ -242,7 +246,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.02,
@@ -255,7 +259,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
                 color: _secondary,
@@ -292,7 +296,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                       alignment: Alignment.centerLeft,
                       widthFactor: (_position / _duration).clamp(0.0, 1.0),
                       child: Container(
-                        decoration: const BoxDecoration(color: _primary),
+                        decoration: BoxDecoration(color: _primary),
                       ),
                     ),
                   ),
@@ -307,7 +311,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                 children: [
                   Text(
                     _fmt(_position),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: _outline,
@@ -315,7 +319,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                   ),
                   Text(
                     _fmt(_duration),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: _outline,
@@ -346,7 +350,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
           ),
           _controlButton(
             onTap: _prev,
-            child: const Icon(
+            child: Icon(
               Icons.skip_previous_rounded,
               size: 32,
               color: _onSurfaceVariant,
@@ -377,7 +381,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
           ),
           _controlButton(
             onTap: _next,
-            child: const Icon(
+            child: Icon(
               Icons.skip_next_rounded,
               size: 32,
               color: _onSurfaceVariant,
@@ -431,11 +435,11 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
           Container(
             width: 40,
             height: 40,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: _secondaryContainer,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.edit_note_rounded,
               size: 20,
               color: _onSecondaryContainer,
@@ -446,7 +450,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(top: 4),
                   child: Text(
                     'Shared Note',
@@ -461,7 +465,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                 const SizedBox(height: 4),
                 Text(
                   widget.note,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     height: 1.5,
                     color: _onSurfaceVariant,

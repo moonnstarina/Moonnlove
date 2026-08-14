@@ -1,11 +1,14 @@
+import '../providers/app_palette.dart';
+import '../providers/theme_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 
-const Color _primary = Color(0xFF964549);
-const Color _onSurface = Color(0xFF191C1D);
-const Color _onSurfaceVariant = Color(0xFF544242);
-const Color _surfaceLowest = Color(0xFFFFFFFF);
-const Color _surfaceVariant = Color(0xFFE1E3E4);
+Color get _primary => AppPalette.primary;
+Color get _onSurface => AppPalette.onSurface;
+Color get _onSurfaceVariant => AppPalette.onSurfaceVariant;
+Color get _surfaceLowest => AppPalette.surfaceLowest;
+Color get _surfaceVariant => AppPalette.surfaceVariant;
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -73,6 +76,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: _surfaceLowest,
       body: SafeArea(
@@ -177,7 +181,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
-                    child: const Text(
+                    child: Text(
                       'Login',
                       style: TextStyle(
                         color: _primary,
@@ -208,19 +212,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
       controller: controller,
       obscureText: obscure,
       keyboardType: keyboardType,
-      style: const TextStyle(
+      style: TextStyle(
         color: _onSurface,
         fontSize: 16,
         fontWeight: FontWeight.w500,
       ),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(
+        labelStyle: TextStyle(
           color: _onSurfaceVariant,
           fontSize: 16,
           fontWeight: FontWeight.w400,
         ),
-        floatingLabelStyle: const TextStyle(
+        floatingLabelStyle: TextStyle(
           color: _primary,
           fontSize: 14,
           fontWeight: FontWeight.w600,
@@ -253,12 +257,13 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
+            Text(
               'Buat akun baru',
               style: TextStyle(
                 fontSize: 32,
@@ -268,7 +273,7 @@ class _Header extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(Icons.favorite, color: _primary, size: 28),
+            Icon(Icons.favorite, color: _primary, size: 28),
           ],
         ),
         const SizedBox(height: 8),

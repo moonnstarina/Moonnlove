@@ -1,16 +1,19 @@
+import '../providers/app_palette.dart';
+import '../providers/theme_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import '../services/partner_service.dart';
 
-const Color _background = Color(0xFFF8F9FA);
-const Color _primary = Color(0xFF964549);
-const Color _primaryContainer = Color(0xFFFF999C);
-const Color _onPrimary = Color(0xFFFFFFFF);
-const Color _onSurface = Color(0xFF191C1D);
-const Color _onSurfaceVariant = Color(0xFF544242);
-const Color _surfaceLowest = Color(0xFFFFFFFF);
-const Color _surfaceContainerHigh = Color(0xFFE7E8E9);
-const Color _secondaryContainer = Color(0xFFF1DEDE);
-const Color _outlineVariant = Color(0xFFDAC1C0);
+Color get _background => AppPalette.background;
+Color get _primary => AppPalette.primary;
+Color get _primaryContainer => AppPalette.primaryContainer;
+Color get _onPrimary => AppPalette.onPrimary;
+Color get _onSurface => AppPalette.onSurface;
+Color get _onSurfaceVariant => AppPalette.onSurfaceVariant;
+Color get _surfaceLowest => AppPalette.surfaceLowest;
+Color get _surfaceContainerHigh => AppPalette.surfaceContainerHigh;
+Color get _secondaryContainer => AppPalette.secondaryContainer;
+Color get _outlineVariant => AppPalette.outlineVariant;
 
 const _milestones = [7, 30, 50, 100, 200, 365];
 
@@ -77,6 +80,7 @@ class _StreakScreenState extends State<StreakScreen>
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     final now = DateTime.now();
     final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
     final firstWeekday =
@@ -129,8 +133,8 @@ class _StreakScreenState extends State<StreakScreen>
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(
         children: [
-          const Icon(Icons.favorite_rounded, color: _primary, size: 24),
-          const Expanded(
+          Icon(Icons.favorite_rounded, color: _primary, size: 24),
+          Expanded(
             child: Center(
               child: Text(
                 'Streak',
@@ -169,7 +173,7 @@ class _StreakScreenState extends State<StreakScreen>
                 ),
                 Text(
                   '$streak',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 44,
                     fontWeight: FontWeight.w800,
                     color: _onPrimary,
@@ -186,7 +190,7 @@ class _StreakScreenState extends State<StreakScreen>
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Keep it going! 🔥',
           style: TextStyle(fontSize: 14, color: _onSurfaceVariant),
         ),
@@ -223,14 +227,14 @@ class _StreakScreenState extends State<StreakScreen>
             children: [
               Text(
                 _monthName(now.month) + ' ${now.year}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: _onSurface,
                 ),
               ),
               Row(
-                children: const [
+                children: final [
                   Icon(Icons.chevron_left_rounded,
                       color: _onSurfaceVariant, size: 20),
                   SizedBox(width: 12),
@@ -365,7 +369,7 @@ class _StreakScreenState extends State<StreakScreen>
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'MILESTONE',
                     style: TextStyle(
                       fontSize: 12,
@@ -377,7 +381,7 @@ class _StreakScreenState extends State<StreakScreen>
                   const SizedBox(height: 4),
                   Text(
                     next == null ? '365+ Days' : '$target Days',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: _onSurface,
@@ -386,7 +390,7 @@ class _StreakScreenState extends State<StreakScreen>
                   const SizedBox(height: 2),
                   Text(
                     next == null ? 'Legendary streak!' : 'Next milestone',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: _onSurfaceVariant,
                     ),
@@ -398,7 +402,7 @@ class _StreakScreenState extends State<StreakScreen>
                   children: [
                     TextSpan(
                       text: '$streak',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: _primary,
@@ -480,7 +484,7 @@ class _StreakScreenState extends State<StreakScreen>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Center(
+              Center(
                 child: Text(
                   'Milestones',
                   style: TextStyle(
@@ -506,7 +510,7 @@ class _StreakScreenState extends State<StreakScreen>
                       const SizedBox(width: 12),
                       Text(
                         '$m Days',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                           color: _onSurface,

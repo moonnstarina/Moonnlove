@@ -1,11 +1,14 @@
+import '../providers/app_palette.dart';
+import '../providers/theme_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import '../services/partner_service.dart';
 
-const Color _background = Color(0xFFF8F9FA);
-const Color _primary = Color(0xFF964549);
-const Color _onSurface = Color(0xFF191C1D);
-const Color _onSurfaceVariant = Color(0xFF544242);
-const Color _secondaryContainer = Color(0xFFF1DEDE);
+Color get _background => AppPalette.background;
+Color get _primary => AppPalette.primary;
+Color get _onSurface => AppPalette.onSurface;
+Color get _onSurfaceVariant => AppPalette.onSurfaceVariant;
+Color get _secondaryContainer => AppPalette.secondaryContainer;
 
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -59,10 +62,11 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: _background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Notifikasi',
           style: TextStyle(color: _onSurface),
         ),
@@ -138,7 +142,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Pengaturan tersimpan otomatis dan disinkronkan ke pasangan.',
                   style: TextStyle(fontSize: 12, color: _onSurfaceVariant),
                 ),
@@ -158,7 +162,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       contentPadding: const EdgeInsets.symmetric(horizontal: 12),
       title: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w500,
           color: _onSurface,
@@ -166,12 +170,12 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       ),
       subtitle: Text(
         subtitle,
-        style: const TextStyle(fontSize: 13, color: _onSurfaceVariant),
+        style: TextStyle(fontSize: 13, color: _onSurfaceVariant),
       ),
       secondary: Container(
         width: 40,
         height: 40,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: _secondaryContainer,
           shape: BoxShape.circle,
         ),
