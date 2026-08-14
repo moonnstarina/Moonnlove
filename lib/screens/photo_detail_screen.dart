@@ -12,6 +12,7 @@ Color get _primaryContainer => AppPalette.primaryContainer;
 Color get _onPrimaryContainer => AppPalette.onPrimaryContainer;
 Color get _onSurface => AppPalette.onSurface;
 Color get _onSurfaceVariant => AppPalette.onSurfaceVariant;
+Color get _surfaceLowest => AppPalette.surfaceLowest;
 Color get _surfaceContainerLow => AppPalette.surfaceContainerLow;
 Color get _outlineVariant => AppPalette.outlineVariant;
 
@@ -71,7 +72,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
             hintText: 'Tulis caption...',
             hintStyle: TextStyle(color: _onSurfaceVariant),
             filled: true,
-            fillColor: _surfaceContainerLow,
+            fillColor: _surfaceLowest,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,

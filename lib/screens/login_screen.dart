@@ -261,7 +261,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         prefixIcon: Icon(icon, color: _primary.withOpacity(0.8), size: 22),
         suffixIcon: suffix,
         filled: true,
-        fillColor: _bg,
+        fillColor: _surfaceLowest,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(999),

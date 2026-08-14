@@ -652,7 +652,7 @@ class _GameScreenState extends State<GameScreen>
                         size: 20,
                       ),
                       filled: true,
-                      fillColor: _surfaceContainerLow,
+                      fillColor: _surfaceLowest,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,

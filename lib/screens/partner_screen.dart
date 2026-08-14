@@ -250,7 +250,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
               fontSize: 24,
             ),
             filled: true,
-            fillColor: const Color(0xFFF3F4F5),
+            fillColor: _surfaceLowest,
             contentPadding: const EdgeInsets.symmetric(vertical: 16),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

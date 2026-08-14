@@ -9,6 +9,7 @@ import '../services/auth_service.dart';
 import '../services/partner_service.dart';
 
 Color get _background => AppPalette.background;
+Color get _surfaceLowest => AppPalette.surfaceLowest;
 Color get _surfaceContainer => AppPalette.surfaceContainer;
 Color get _surfaceContainerHigh => AppPalette.surfaceContainerHigh;
 Color get _surfaceVariant => AppPalette.surfaceVariant;
@@ -699,7 +700,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                   decoration: BoxDecoration(
-                    color: _surfaceContainer,
+                    color: _surfaceLowest,
                     border: Border.all(
                       color: _inputFocused ? _primary : _outlineVariant,
                       width: _inputFocused ? 1.2 : 1,
