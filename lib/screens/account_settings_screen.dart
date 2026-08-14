@@ -1,7 +1,5 @@
 import '../providers/app_palette.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/theme_provider.dart';
 import '../services/partner_service.dart';
 
 Color get _primary => AppPalette.primary;
@@ -16,19 +14,6 @@ class AccountSettingsScreen extends StatefulWidget {
 }
 
 class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
-  static const List<Color> _presetColors = [
-    Color(0xFFE91E63),
-    Color(0xFF9C27B0),
-    Color(0xFF3F51B5),
-    Color(0xFF2196F3),
-    Color(0xFF009688),
-    Color(0xFF4CAF50),
-    Color(0xFFFF9800),
-    Color(0xFF795548),
-    Color(0xFF607D8B),
-    Color(0xFFF44336),
-  ];
-
   final _partnerService = PartnerService();
   bool _isPaired = false;
   bool _loading = true;
@@ -86,9 +71,6 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
-    final primaryColor = themeProvider.primaryColor;
-
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -102,64 +84,10 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const Text(
-            'Tema',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: _presetColors.map((color) {
-              final isSelected = primaryColor.value == color.value;
-              return GestureDetector(
-                onTap: () => themeProvider.setPrimaryColor(color),
-                child: Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected ? Colors.white : Colors.transparent,
-                      width: 3,
-                    ),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: color.withOpacity(0.5),
-                              blurRadius: 10,
-                              spreadRadius: 2,
-                            ),
-                          ]
-                        : [],
-                  ),
-                  child: isSelected
-                      ? const Icon(Icons.check, color: Colors.white)
-                      : null,
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 24),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Dark Mode'),
-            subtitle: const Text('Mode gelap'),
-            secondary: Icon(
-              themeProvider.themeMode == ThemeMode.dark
-                  ? Icons.dark_mode_rounded
-                  : Icons.light_mode_rounded,
-              color: primaryColor,
-            ),
-            value: themeProvider.themeMode == ThemeMode.dark,
-            onChanged: (_) => themeProvider.toggleTheme(),
-          ),
-          const Divider(),
           if (!_loading && !_isPaired)
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.person_add_rounded, color: primaryColor),
+              leading: Icon(Icons.person_add_rounded, color: _primary),
               title: const Text('Hubungkan Pasangan'),
               subtitle: const Text('Kirim undangan ke pasangan'),
               trailing: const Icon(Icons.chevron_right_rounded),
@@ -168,7 +96,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
           if (!_loading && _isPaired) ...[
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.favorite_rounded, color: primaryColor),
+              leading: Icon(Icons.favorite_rounded, color: _primary),
               title: const Text('Pasangan'),
               subtitle: const Text('Kamu sudah terhubung'),
               trailing: const Icon(Icons.chevron_right_rounded),
@@ -179,7 +107,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
           if (_isPaired) ...[
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.cake_rounded, color: primaryColor),
+              leading: Icon(Icons.cake_rounded, color: _primary),
               title: const Text('Tanggal Jadian'),
               subtitle: Text(
                 _anniversary != null
