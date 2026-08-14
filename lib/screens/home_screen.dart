@@ -35,6 +35,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   String _userName = 'User';
   String _partnerName = 'Partner';
+  String? _partnerPhotoUrl;
   bool _paired = false;
   int _days = 0;
   String _sinceText = '';
@@ -144,6 +145,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       final map = Map<dynamic, dynamic>.from(data as Map);
       setState(() {
         _partnerName = map['name']?.toString() ?? _partnerName;
+        _partnerPhotoUrl = map['photo_url']?.toString();
       });
     });
   }
@@ -316,18 +318,28 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             borderRadius: BorderRadius.circular(16),
             child: AspectRatio(
               aspectRatio: 1,
-              child: Image.asset(
-                'assets/images/hero.jpg',
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const Icon(
-                  Icons.favorite,
-                  size: 80,
-                  color: _primary,
-                ),
-              ),
+              child: _partnerPhotoUrl != null
+                  ? Image.network(
+                      _partnerPhotoUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _buildHeroImage(),
+                    )
+                  : _buildHeroImage(),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildHeroImage() {
+    return Image.asset(
+      'assets/images/hero.jpg',
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => const Icon(
+        Icons.favorite,
+        size: 80,
+        color: _primary,
       ),
     );
   }
