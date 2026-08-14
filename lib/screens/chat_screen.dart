@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/auth_service.dart';
@@ -105,6 +106,52 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     _messageController.clear();
+  }
+
+  Future<void> _sendPhoto() async {
+    final ref = _chatRef;
+    final user = _authService.currentUser;
+    if (ref == null || user == null) return;
+
+    final picked = await ImagePicker()
+        .pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (picked == null) return;
+
+    try {
+      final url = await _partnerService.uploadChatImage(picked.path);
+      await ref.push().set({
+        'sender_uid': user.uid,
+        'message': '',
+        'type': 'photo',
+        'url': url,
+        'timestamp': ServerValue.timestamp,
+        'is_read': false,
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal kirim foto: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _markAllRead() async {
+    final ref = _chatRef;
+    final user = _authService.currentUser;
+    if (ref == null || user == null) return;
+    final snapshot = await ref.orderByChild('is_read').equalTo(false).once();
+    final data = snapshot.snapshot.value;
+    if (data == null) return;
+    (data as Map).forEach((key, value) {
+      final map = Map<String, dynamic>.from(value);
+      if (map['sender_uid']?.toString() != user.uid) {
+        ref.child(key.toString()).child('is_read').set(true);
+      }
+    });
   }
 
   void _showComingSoon() {
@@ -282,6 +329,8 @@ class _ChatScreenState extends State<ChatScreen> {
           (a, b) => (b['timestamp'] ?? 0).compareTo(a['timestamp'] ?? 0),
         );
 
+        WidgetsBinding.instance.addPostFrameCallback((_) => _markAllRead());
+
         final items = <Widget>[];
         String? lastDay;
         for (final msg in messages) {
@@ -363,6 +412,84 @@ class _ChatScreenState extends State<ChatScreen> {
     final maxWidth = MediaQuery.of(context).size.width * 0.85;
     final timeText = _formatTime(msg['timestamp']);
     final isRead = msg['is_read'] == true;
+    final isPhoto = msg['type'] == 'photo';
+    final photoUrl = msg['url']?.toString() ?? '';
+
+    if (isPhoto) {
+      return Align(
+        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: Column(
+          crossAxisAlignment:
+              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            Container(
+              constraints: BoxConstraints(maxWidth: maxWidth * 0.7),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: isMe ? null : Border.all(color: _surfaceVariant),
+                boxShadow: [
+                  BoxShadow(
+                    color: _primary.withOpacity(isMe ? 0.08 : 0.04),
+                    blurRadius: 20,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: GestureDetector(
+                onTap: () => _viewPhoto(photoUrl),
+                child: Image.network(
+                  photoUrl,
+                  fit: BoxFit.cover,
+                  width: 220,
+                  height: 220,
+                  loadingBuilder: (_, child, progress) => progress == null
+                      ? child
+                      : Container(
+                          width: 220,
+                          height: 220,
+                          color: _surfaceContainer,
+                          child: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        ),
+                  errorBuilder: (_, __, ___) => Container(
+                    width: 220,
+                    height: 220,
+                    color: _surfaceContainer,
+                    child: const Icon(Icons.broken_image_rounded, size: 40),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 4, left: 4, right: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    timeText,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: _onSurfaceVariant,
+                    ),
+                  ),
+                  if (isMe) ...[
+                    const SizedBox(width: 3),
+                    Icon(
+                      isRead ? Icons.done_all_rounded : Icons.done_rounded,
+                      size: 14,
+                      color: isRead ? _primary : _onSurfaceVariant,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     if (isMe) {
       return Align(
@@ -507,6 +634,38 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  void _viewPhoto(String url) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          body: SafeArea(
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: InteractiveViewer(
+                    child: Center(
+                      child: Image.network(url, fit: BoxFit.contain),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildInputBar(Color primaryColor) {
     return Container(
       decoration: BoxDecoration(
@@ -531,7 +690,7 @@ class _ChatScreenState extends State<ChatScreen> {
               IconButton(
                 icon: const Icon(Icons.add_circle_rounded),
                 color: _onSurfaceVariant,
-                onPressed: _showComingSoon,
+                onPressed: _sendPhoto,
               ),
               const SizedBox(width: 4),
               Expanded(

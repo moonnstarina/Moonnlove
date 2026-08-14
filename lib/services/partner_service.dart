@@ -249,4 +249,17 @@ class PartnerService {
     }
     return {};
   }
+
+  Future<String> uploadChatImage(String filePath) async {
+    final uid = currentUid;
+    if (uid == null) throw Exception('Not logged in');
+    final coupleId = await getCoupleId();
+    if (coupleId == null) throw Exception('Belum terhubung dengan pasangan');
+
+    final ref = FirebaseStorage.instance.ref().child(
+          'chat_images/$coupleId/${DateTime.now().millisecondsSinceEpoch}_$uid.jpg',
+        );
+    await ref.putFile(File(filePath));
+    return await ref.getDownloadURL();
+  }
 }
