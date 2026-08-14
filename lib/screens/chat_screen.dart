@@ -427,9 +427,9 @@ class _ChatScreenState extends State<ChatScreen> {
             Container(
               constraints: BoxConstraints(maxWidth: maxWidth * 0.7),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isMe ? _primaryContainer : _surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(16),
-                border: isMe ? null : Border.all(color: _surfaceVariant),
+                border: isMe ? null : Border.all(color: _outlineVariant),
                 boxShadow: [
                   BoxShadow(
                     color: _primary.withOpacity(isMe ? 0.08 : 0.04),
@@ -593,8 +593,8 @@ class _ChatScreenState extends State<ChatScreen> {
                       vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: _surfaceVariant),
+                      color: _surfaceContainerHigh,
+                      border: Border.all(color: _outlineVariant),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(16),
                         topRight: Radius.circular(16),
