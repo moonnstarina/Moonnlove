@@ -306,4 +306,27 @@ class PartnerService {
           'is_read': false,
         });
   }
+
+  Future<void> saveLocation(double lat, double lng) async {
+    final uid = currentUid;
+    if (uid == null) return;
+    await _usersRef.child(uid).child('location').set({
+      'lat': lat,
+      'lng': lng,
+      'updated_at': ServerValue.timestamp,
+    });
+  }
+
+  Future<Map<String, double>?> getPartnerLocation() async {
+    final partnerData = await getPartnerData();
+    final loc = partnerData?['location'];
+    if (loc is Map) {
+      final lat = loc['lat'];
+      final lng = loc['lng'];
+      if (lat is num && lng is num) {
+        return {'lat': lat.toDouble(), 'lng': lng.toDouble()};
+      }
+    }
+    return null;
+  }
 }
