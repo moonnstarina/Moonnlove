@@ -61,7 +61,7 @@ class AppPalette {
     onTertiaryFixed = s.onTertiaryFixed;
     onTertiaryFixedVariant = s.onTertiaryFixedVariant;
     inverseSurface = s.inverseSurface;
-    inverseOnSurface = s.inverseOnSurface;
+    inverseOnSurface = s.onInverseSurface;
     inversePrimary = s.inversePrimary;
     primaryFixed = s.primaryFixed;
     error = s.error;

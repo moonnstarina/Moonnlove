@@ -234,7 +234,7 @@ class _StreakScreenState extends State<StreakScreen>
                 ),
               ),
               Row(
-                children: final [
+                children: [
                   Icon(Icons.chevron_left_rounded,
                       color: _onSurfaceVariant, size: 20),
                   SizedBox(width: 12),

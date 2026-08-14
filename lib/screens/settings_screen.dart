@@ -461,7 +461,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
-    Color color = _primary,
+    Color color = const Color(0xFF964549),
     Color? bg,
     Widget? trailing,
     bool showChevron = true,
