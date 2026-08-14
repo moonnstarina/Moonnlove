@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'dart:math';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../services/auth_service.dart';
 
 class PartnerService {
@@ -172,5 +174,56 @@ class PartnerService {
       return prefs.map((k, v) => MapEntry(k.toString(), v == true));
     }
     return {};
+  }
+
+  Future<DatabaseReference?> getPhotosRef() async {
+    final coupleId = await getCoupleId();
+    if (coupleId == null) return null;
+    return _couplesRef.child(coupleId).child('photos');
+  }
+
+  Future<String> uploadPhoto(String filePath, {String caption = ''}) async {
+    final uid = currentUid;
+    if (uid == null) throw Exception('Not logged in');
+    final coupleId = await getCoupleId();
+    if (coupleId == null) throw Exception('Belum terhubung dengan pasangan');
+
+    final ref = FirebaseStorage.instance.ref().child(
+          'photos/$coupleId/${DateTime.now().millisecondsSinceEpoch}_$uid.jpg',
+        );
+    await ref.putFile(File(filePath));
+    final url = await ref.getDownloadURL();
+
+    final photosRef = await getPhotosRef();
+    await photosRef?.push().set({
+      'url': url,
+      'uploader_uid': uid,
+      'caption': caption,
+      'timestamp': ServerValue.timestamp,
+      'type': 'photo',
+      'likes': {uid: true},
+    });
+    return url;
+  }
+
+  Future<void> togglePhotoLike(String photoId) async {
+    final uid = currentUid;
+    if (uid == null) return;
+    final photosRef = await getPhotosRef();
+    if (photosRef == null) return;
+    final photo = (await photosRef.child(photoId).once()).snapshot.value;
+    if (photo is! Map) return;
+    final likes = photo['likes'];
+    final liked = likes is Map && likes.containsKey(uid);
+    if (liked) {
+      await photosRef.child(photoId).child('likes').child(uid).remove();
+    } else {
+      await photosRef.child(photoId).child('likes').child(uid).set(true);
+    }
+  }
+
+  Future<void> updatePhotoCaption(String photoId, String caption) async {
+    final photosRef = await getPhotosRef();
+    await photosRef?.child(photoId).update({'caption': caption});
   }
 }
