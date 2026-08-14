@@ -28,7 +28,6 @@ class _GameInfo {
     required this.color,
     required this.bg,
     required this.glow,
-    this.isCustom = false,
     this.firebaseKey,
   });
 
@@ -37,7 +36,6 @@ class _GameInfo {
   final Color color;
   final Color bg;
   final Color glow;
-  final bool isCustom;
   final String? firebaseKey;
   bool playing = false;
   DateTime? playingSince;
@@ -56,7 +54,6 @@ class _GameScreenState extends State<GameScreen>
   late final Animation<double> _floatOffset;
   final _partnerService = PartnerService();
 
-  late final List<_GameInfo> _games;
   final List<_GameInfo> _customGames = [];
   StreamSubscription<DatabaseEvent>? _gamesSub;
   Timer? _detectTimer;
@@ -73,43 +70,6 @@ class _GameScreenState extends State<GameScreen>
     _floatOffset = Tween<double>(begin: 0, end: -5).animate(
       CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
     );
-    _games = [
-      _GameInfo(
-        icon: Icons.local_fire_department_rounded,
-        title: 'Free Fire',
-        color: _primary,
-        bg: const Color(0x33FF999C),
-        glow: const Color(0x1AFF999C),
-      ),
-      _GameInfo(
-        icon: Icons.sports_martial_arts_rounded,
-        title: 'Mobile Legends',
-        color: _tertiary,
-        bg: const Color(0x33CAAFAF),
-        glow: const Color(0x1ACAAFAF),
-      ),
-      _GameInfo(
-        icon: Icons.grid_view_rounded,
-        title: 'Minecraft',
-        color: _secondary,
-        bg: const Color(0x66F1DEDE),
-        glow: const Color(0x33F1DEDE),
-      ),
-      _GameInfo(
-        icon: Icons.emoji_people_rounded,
-        title: 'Super Sus',
-        color: _primary,
-        bg: const Color(0x33FF999C),
-        glow: const Color(0x1AFF999C),
-      ),
-      _GameInfo(
-        icon: Icons.category_rounded,
-        title: 'Roblox',
-        color: _tertiary,
-        bg: const Color(0x33CAAFAF),
-        glow: const Color(0x1ACAAFAF),
-      ),
-    ];
     _initDetection();
     _initCustomGames();
   }
@@ -130,7 +90,6 @@ class _GameScreenState extends State<GameScreen>
               color: _primary,
               bg: const Color(0x33FF999C),
               glow: const Color(0x1AFF999C),
-              isCustom: true,
               firebaseKey: key.toString(),
             ));
           }
@@ -168,7 +127,7 @@ class _GameScreenState extends State<GameScreen>
       return;
     }
     setState(() {
-      for (final game in _games) {
+      for (final game in _customGames) {
         if (game.title == detected) {
           if (!game.playing) {
             game.playing = true;
@@ -268,31 +227,14 @@ class _GameScreenState extends State<GameScreen>
                   ),
                   const SizedBox(height: 24),
                   if (!_hasPermission) _buildPermissionBanner(),
-                  for (var i = 0; i < _games.length; i++) ...[
-                    _buildGameCard(i, _games[i]),
-                    const SizedBox(height: 16),
-                  ],
-                  if (_customGames.isNotEmpty) ...[
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 4),
-                      child: Row(
-                        children: [
-                          Text(
-                            'Daftar bareng',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: _onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  if (_customGames.isEmpty)
+                    _buildEmptyGames()
+                  else
                     for (var i = 0; i < _customGames.length; i++) ...[
                       _buildGameCard(i, _customGames[i]),
                       const SizedBox(height: 16),
                     ],
-                  ],
+                  const SizedBox(height: 4),
                   _buildAddGameCard(),
                 ],
               ),
@@ -466,7 +408,7 @@ class _GameScreenState extends State<GameScreen>
 
   Widget _buildGameCard(int index, _GameInfo game) {
     return GestureDetector(
-      onLongPress: game.isCustom ? () => _removeGame(game) : null,
+      onLongPress: () => _removeGame(game),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -516,7 +458,7 @@ class _GameScreenState extends State<GameScreen>
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        game.isCustom ? 'Not Playing' : _statusText(game),
+                        _statusText(game),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -567,6 +509,53 @@ class _GameScreenState extends State<GameScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyGames() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      decoration: BoxDecoration(
+        color: _surfaceLowest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: const BoxDecoration(
+              color: Color(0x33FF999C),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.sports_esports_rounded,
+              color: _primary,
+              size: 36,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Belum ada game',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: _onSurface,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Tambah game yang kalian mainkan bareng, list-nya otomatis muncul di HP pasanganmu.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.4,
+              color: _onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }
