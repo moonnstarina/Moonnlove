@@ -109,7 +109,7 @@ class _NotesScreenState extends State<NotesScreen> {
   int _playingIndex = 1;
 
   void _toggleLike(int index) {
-    setState(() => _likes[index] = !_likes[index]);
+    setState(() => _likes[index] = !(_likes[index] ?? false));
   }
 
   @override

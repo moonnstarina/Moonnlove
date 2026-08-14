@@ -40,7 +40,7 @@ class _GameScreenState extends State<GameScreen>
       button: 'Ajak Main',
     ),
     (
-      icon: Icons.swords_rounded,
+      icon: Icons.sports_martial_arts_rounded,
       title: 'Mobile Legends',
       status: 'Playing for 20 mins',
       playing: true,

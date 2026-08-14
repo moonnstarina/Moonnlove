@@ -436,7 +436,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
               shape: BoxShape.circle,
             ),
             child: const Icon(
-              Icons.stylus_note_rounded,
+              Icons.edit_note_rounded,
               size: 20,
               color: _onSecondaryContainer,
             ),
