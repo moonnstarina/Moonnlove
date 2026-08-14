@@ -418,6 +418,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           _buildMenuTile(
             icon: Icons.lock_rounded,
+            label: 'Kunci Aplikasi',
+            onTap: () => Navigator.pushNamed(context, '/app-lock'),
+          ),
+          _buildMenuTile(
+            icon: Icons.lock_rounded,
             label: 'Privasi',
             onTap: _comingSoon,
           ),

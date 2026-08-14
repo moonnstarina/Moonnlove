@@ -18,6 +18,9 @@ import 'screens/account_settings_screen.dart';
 import 'screens/notification_settings_screen.dart';
 import 'screens/partner_screen.dart';
 import 'screens/streak_screen.dart';
+import 'screens/lock_screen.dart';
+import 'screens/lock_settings_screen.dart';
+import 'services/app_lock_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,6 +62,7 @@ class _Root extends StatelessWidget {
               '/notifications': (context) => const NotificationSettingsScreen(),
               '/partner': (context) => const PartnerScreen(),
               '/streak': (context) => const StreakScreen(),
+              '/app-lock': (context) => const LockSettingsScreen(),
             },
           );
         },
@@ -83,10 +87,54 @@ class AuthGate extends StatelessWidget {
         }
         final user = snapshot.data;
         if (user != null) {
-          return const MainShell();
+          return const _LockGate(child: MainShell());
         }
         return const LoginScreen();
       },
     );
+  }
+}
+
+class _LockGate extends StatefulWidget {
+  const _LockGate({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_LockGate> createState() => _LockGateState();
+}
+
+class _LockGateState extends State<_LockGate> {
+  final _lockService = AppLockService();
+  bool _loading = true;
+  bool _unlocked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _check();
+  }
+
+  Future<void> _check() async {
+    final enabled = await _lockService.isEnabled();
+    if (mounted) {
+      setState(() {
+        _unlocked = !enabled;
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (!_unlocked) {
+      return LockScreen(onUnlocked: () => setState(() => _unlocked = true));
+    }
+    return widget.child;
   }
 }
