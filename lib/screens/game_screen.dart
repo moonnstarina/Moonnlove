@@ -602,7 +602,6 @@ class _GameScreenState extends State<GameScreen>
   Future<void> _addGame() async {
     final installed = await GameDetectorService.getInstalledApps();
     final controller = TextEditingController();
-    var manual = installed.isEmpty;
 
     final draft = await showDialog<({String name, String package})>(
       context: context,
@@ -626,138 +625,110 @@ class _GameScreenState extends State<GameScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  SegmentedButton<bool>(
-                    segments: const [
-                      ButtonSegment(
-                        value: false,
-                        label: Text('Pilih dari HP'),
-                        icon: Icon(Icons.smartphone_rounded, size: 18),
-                      ),
-                      ButtonSegment(
-                        value: true,
-                        label: Text('Ketik Manual'),
-                        icon: Icon(Icons.keyboard_rounded, size: 18),
-                      ),
-                    ],
-                    selected: {manual},
-                    onSelectionChanged: (s) =>
-                        setDialogState(() => manual = s.first),
-                    showSelectedIcon: false,
-                    style: ButtonStyle(
-                      textStyle: WidgetStateProperty.all(
-                        const TextStyle(fontSize: 12),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Pilih game yang terpasang di HP-mu',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: _onSurfaceVariant,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  if (manual)
-                    TextField(
-                      controller: controller,
-                      maxLength: 30,
-                      autofocus: true,
-                      style: const TextStyle(color: _onSurface),
-                      decoration: InputDecoration(
-                        hintText: 'Nama game...',
-                        hintStyle:
-                            const TextStyle(color: _onSurfaceVariant),
-                        filled: true,
-                        fillColor: _surfaceContainerLow,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: controller,
+                    style: const TextStyle(color: _onSurface),
+                    decoration: InputDecoration(
+                      hintText: 'Cari game...',
+                      hintStyle: const TextStyle(color: _onSurfaceVariant),
+                      prefixIcon: const Icon(
+                        Icons.search_rounded,
+                        color: _onSurfaceVariant,
+                        size: 20,
                       ),
-                      onSubmitted: (v) {
-                        final name = v.trim();
-                        if (name.isNotEmpty) {
-                          Navigator.pop(
-                              context, (name: name, package: ''));
-                        }
-                      },
-                    )
-                  else ...[
-                    TextField(
-                      controller: controller,
-                      style: const TextStyle(color: _onSurface),
-                      decoration: InputDecoration(
-                        hintText: 'Cari app...',
-                        hintStyle:
-                            const TextStyle(color: _onSurfaceVariant),
-                        prefixIcon: const Icon(
-                          Icons.search_rounded,
-                          color: _onSurfaceVariant,
-                          size: 20,
-                        ),
-                        filled: true,
-                        fillColor: _surfaceContainerLow,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
+                      filled: true,
+                      fillColor: _surfaceContainerLow,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
                       ),
-                      onChanged: (_) => setDialogState(() {}),
                     ),
-                    const SizedBox(height: 12),
-                    Flexible(
-                      child: filtered.isEmpty
-                          ? const Padding(
-                              padding: EdgeInsets.all(24),
-                              child: Text(
-                                'Tidak ada app yang cocok. Coba pilih "Ketik Manual".',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: _onSurfaceVariant,
-                                ),
+                    onChanged: (_) => setDialogState(() {}),
+                  ),
+                  const SizedBox(height: 12),
+                  Flexible(
+                    child: installed.isEmpty
+                        ? const Padding(
+                            padding: EdgeInsets.all(24),
+                            child: Text(
+                              'Gagal memuat daftar app dari HP.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: _onSurfaceVariant,
                               ),
-                            )
-                          : ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: filtered.length > 12
-                                  ? 12
-                                  : filtered.length,
-                              itemBuilder: (context, i) {
-                                final app = filtered[i];
-                                return ListTile(
-                                  dense: true,
-                                  contentPadding: EdgeInsets.zero,
-                                  leading: CircleAvatar(
-                                    radius: 16,
-                                    backgroundColor: _surfaceContainerLow,
-                                    child: const Icon(
-                                      Icons.sports_esports_rounded,
-                                      color: _primary,
-                                      size: 18,
-                                    ),
-                                  ),
-                                  title: Text(
-                                    app.label,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: _onSurface,
-                                    ),
-                                  ),
-                                  subtitle: Text(
-                                    app.package,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: _onSurfaceVariant,
-                                    ),
-                                  ),
-                                  onTap: () => Navigator.pop(
-                                    context,
-                                    (name: app.label, package: app.package),
-                                  ),
-                                );
-                              },
                             ),
+                          )
+                        : filtered.isEmpty
+                            ? const Padding(
+                                padding: EdgeInsets.all(24),
+                                child: Text(
+                                  'Tidak ada game yang cocok.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: _onSurfaceVariant,
+                                  ),
+                                ),
+                              )
+                            : ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: filtered.length > 12
+                                    ? 12
+                                    : filtered.length,
+                                itemBuilder: (context, i) {
+                                  final app = filtered[i];
+                                  return ListTile(
+                                    dense: true,
+                                    contentPadding: EdgeInsets.zero,
+                                    leading: CircleAvatar(
+                                      radius: 16,
+                                      backgroundColor: _surfaceContainerLow,
+                                      child: const Icon(
+                                        Icons.sports_esports_rounded,
+                                        color: _primary,
+                                        size: 18,
+                                      ),
+                                    ),
+                                    title: Text(
+                                      app.label,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: _onSurface,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      app.package,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: _onSurfaceVariant,
+                                      ),
+                                    ),
+                                    onTap: () => Navigator.pop(
+                                      context,
+                                      (name: app.label, package: app.package),
+                                    ),
+                                  );
+                                },
+                              ),
                     ),
-                  ],
+                  ),
                 ],
               ),
             ),
@@ -769,22 +740,6 @@ class _GameScreenState extends State<GameScreen>
                   style: TextStyle(color: _onSurfaceVariant),
                 ),
               ),
-              if (manual)
-                FilledButton(
-                  onPressed: () {
-                    final name = controller.text.trim();
-                    if (name.isNotEmpty) {
-                      Navigator.pop(context, (name: name, package: ''));
-                    }
-                  },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                  child: const Text('Simpan'),
-                ),
             ],
           );
         },
