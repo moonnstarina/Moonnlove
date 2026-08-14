@@ -29,6 +29,7 @@ class _GameInfo {
     required this.bg,
     required this.glow,
     this.firebaseKey,
+    this.package,
   });
 
   final IconData icon;
@@ -37,6 +38,7 @@ class _GameInfo {
   final Color bg;
   final Color glow;
   final String? firebaseKey;
+  final String? package;
   bool playing = false;
   DateTime? playingSince;
 }
@@ -91,6 +93,7 @@ class _GameScreenState extends State<GameScreen>
               bg: const Color(0x33FF999C),
               glow: const Color(0x1AFF999C),
               firebaseKey: key.toString(),
+              package: raw['package']?.toString(),
             ));
           }
         });
@@ -120,7 +123,6 @@ class _GameScreenState extends State<GameScreen>
     if (!_hasPermission) return;
     _detecting = true;
     final package = await GameDetectorService.getForegroundPackage();
-    final detected = GameDetectorService.gameNameForPackage(package);
     final since = await GameDetectorService.getForegroundSince();
     if (!mounted) {
       _detecting = false;
@@ -128,7 +130,11 @@ class _GameScreenState extends State<GameScreen>
     }
     setState(() {
       for (final game in _customGames) {
-        if (game.title == detected) {
+        final hasPackage = game.package?.isNotEmpty == true;
+        final matched = hasPackage
+            ? package == game.package
+            : GameDetectorService.gameNameForPackage(package) == game.title;
+        if (matched) {
           if (!game.playing) {
             game.playing = true;
             game.playingSince = since ?? DateTime.now();
@@ -594,60 +600,207 @@ class _GameScreenState extends State<GameScreen>
   }
 
   Future<void> _addGame() async {
+    final installed = await GameDetectorService.getInstalledApps();
     final controller = TextEditingController();
-    final name = await showDialog<String>(
+    var manual = installed.isEmpty;
+
+    final draft = await showDialog<({String name, String package})>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFFFFFFFF),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text(
-          'Tambah Game',
-          style: TextStyle(fontWeight: FontWeight.w700, color: _onSurface),
-        ),
-        content: TextField(
-          controller: controller,
-          maxLength: 30,
-          style: const TextStyle(color: _onSurface),
-          decoration: InputDecoration(
-            hintText: 'Nama game...',
-            hintStyle: const TextStyle(color: _onSurfaceVariant),
-            filled: true,
-            fillColor: _surfaceContainerLow,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final filtered = installed
+              .where((a) => a.label.toLowerCase().contains(
+                    controller.text.toLowerCase(),
+                  ))
+              .toList();
+          return AlertDialog(
+            backgroundColor: const Color(0xFFFFFFFF),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: const Text(
+              'Tambah Game',
+              style: TextStyle(fontWeight: FontWeight.w700, color: _onSurface),
             ),
-          ),
-          onSubmitted: (v) => Navigator.pop(context, v.trim()),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Batal',
-              style: TextStyle(color: _onSurfaceVariant),
-            ),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, controller.text.trim()),
-            style: FilledButton.styleFrom(
-              backgroundColor: _primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(999),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SegmentedButton<bool>(
+                    segments: const [
+                      ButtonSegment(
+                        value: false,
+                        label: Text('Pilih dari HP'),
+                        icon: Icon(Icons.smartphone_rounded, size: 18),
+                      ),
+                      ButtonSegment(
+                        value: true,
+                        label: Text('Ketik Manual'),
+                        icon: Icon(Icons.keyboard_rounded, size: 18),
+                      ),
+                    ],
+                    selected: {manual},
+                    onSelectionChanged: (s) =>
+                        setDialogState(() => manual = s.first),
+                    showSelectedIcon: false,
+                    style: ButtonStyle(
+                      textStyle: WidgetStateProperty.all(
+                        const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (manual)
+                    TextField(
+                      controller: controller,
+                      maxLength: 30,
+                      autofocus: true,
+                      style: const TextStyle(color: _onSurface),
+                      decoration: InputDecoration(
+                        hintText: 'Nama game...',
+                        hintStyle:
+                            const TextStyle(color: _onSurfaceVariant),
+                        filled: true,
+                        fillColor: _surfaceContainerLow,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      onSubmitted: (v) {
+                        final name = v.trim();
+                        if (name.isNotEmpty) {
+                          Navigator.pop(
+                              context, (name: name, package: ''));
+                        }
+                      },
+                    )
+                  else ...[
+                    TextField(
+                      controller: controller,
+                      style: const TextStyle(color: _onSurface),
+                      decoration: InputDecoration(
+                        hintText: 'Cari app...',
+                        hintStyle:
+                            const TextStyle(color: _onSurfaceVariant),
+                        prefixIcon: const Icon(
+                          Icons.search_rounded,
+                          color: _onSurfaceVariant,
+                          size: 20,
+                        ),
+                        filled: true,
+                        fillColor: _surfaceContainerLow,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      onChanged: (_) => setDialogState(() {}),
+                    ),
+                    const SizedBox(height: 12),
+                    Flexible(
+                      child: filtered.isEmpty
+                          ? const Padding(
+                              padding: EdgeInsets.all(24),
+                              child: Text(
+                                'Tidak ada app yang cocok. Coba pilih "Ketik Manual".',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: _onSurfaceVariant,
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: filtered.length > 12
+                                  ? 12
+                                  : filtered.length,
+                              itemBuilder: (context, i) {
+                                final app = filtered[i];
+                                return ListTile(
+                                  dense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                  leading: CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: _surfaceContainerLow,
+                                    child: const Icon(
+                                      Icons.sports_esports_rounded,
+                                      color: _primary,
+                                      size: 18,
+                                    ),
+                                  ),
+                                  title: Text(
+                                    app.label,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: _onSurface,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    app.package,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: _onSurfaceVariant,
+                                    ),
+                                  ),
+                                  onTap: () => Navigator.pop(
+                                    context,
+                                    (name: app.label, package: app.package),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ],
               ),
             ),
-            child: const Text('Simpan'),
-          ),
-        ],
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  'Batal',
+                  style: TextStyle(color: _onSurfaceVariant),
+                ),
+              ),
+              if (manual)
+                FilledButton(
+                  onPressed: () {
+                    final name = controller.text.trim();
+                    if (name.isNotEmpty) {
+                      Navigator.pop(context, (name: name, package: ''));
+                    }
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  child: const Text('Simpan'),
+                ),
+            ],
+          );
+        },
       ),
     );
-    if (name != null && name.isNotEmpty) {
+
+    if (draft != null && draft.name.trim().isNotEmpty) {
       try {
-        await _partnerService.addGame(name);
+        await _partnerService.addGame(
+          draft.name.trim(),
+          package: draft.package,
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('$name ditambahkan ke daftar bareng!'),
+              content: Text('${draft.name.trim()} ditambahkan ke daftar bareng!'),
               behavior: SnackBarBehavior.floating,
             ),
           );

@@ -24,6 +24,7 @@ class MainActivity : FlutterActivity() {
                         val data = getForegroundApp()
                         result.success(data)
                     }
+                    "getInstalledApps" -> result.success(getInstalledApps())
                     "hasUsagePermission" -> result.success(hasUsagePermission())
                     "openUsageSettings" -> {
                         openUsageSettings()
@@ -32,6 +33,24 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+    }
+
+    private fun getInstalledApps(): List<Map<String, String>> {
+        val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        val apps = packageManager.queryIntentActivities(intent, 0)
+        val result = mutableListOf<Map<String, String>>()
+        for (resolveInfo in apps) {
+            val activityInfo = resolveInfo.activityInfo ?: continue
+            val packageName = activityInfo.packageName
+            if (result.none { it["package"] == packageName }) {
+                val label = packageManager
+                    .getApplicationLabel(activityInfo.applicationInfo)
+                    ?.toString()
+                    ?: packageName
+                result.add(mapOf("package" to packageName, "label" to label))
+            }
+        }
+        return result.sortedBy { it["label"]?.lowercase() }
     }
 
     private fun getForegroundApp(): Map<String, Any>? {

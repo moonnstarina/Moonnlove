@@ -269,13 +269,14 @@ class PartnerService {
     return _couplesRef.child(coupleId).child('games');
   }
 
-  Future<void> addGame(String name) async {
+  Future<void> addGame(String name, {String? package}) async {
     final uid = currentUid;
     if (uid == null) throw Exception('Not logged in');
     final coupleId = await getCoupleId();
     if (coupleId == null) throw Exception('Belum terhubung dengan pasangan');
     await _couplesRef.child(coupleId).child('games').push().set({
       'name': name,
+      if (package != null && package.isNotEmpty) 'package': package,
       'added_by_uid': uid,
       'timestamp': ServerValue.timestamp,
     });

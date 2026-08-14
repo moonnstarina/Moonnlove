@@ -53,6 +53,21 @@ class GameDetectorService {
     }
   }
 
+  static Future<List<({String package, String label})>> getInstalledApps() async {
+    try {
+      final result = await _channel.invokeListMethod<Map<Object?, Object?>>(
+        'getInstalledApps',
+      );
+      if (result == null) return [];
+      return result.map((m) {
+        final package = m['package']?.toString() ?? '';
+        return (package: package, label: m['label']?.toString() ?? package);
+      }).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
   static String? gameNameForPackage(String? package) {
     if (package == null) return null;
     for (final entry in gamePackages.entries) {
