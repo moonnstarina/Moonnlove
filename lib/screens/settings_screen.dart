@@ -411,6 +411,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onTap: _editProfile,
           ),
           _buildMenuTile(
+            icon: Icons.palette_rounded,
+            label: 'Tema',
+            onTap: _showThemePicker,
+          ),
+          _buildMenuTile(
             icon: Icons.settings_rounded,
             label: 'Pengaturan Akun',
             onTap: () =>
@@ -453,6 +458,89 @@ class _ProfileScreenState extends State<ProfileScreen> {
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _showThemePicker() async {
+    final themeProvider = context.read<ThemeProvider>();
+    const presets = [
+      Color(0xFF964549),
+      Color(0xFFE91E63),
+      Color(0xFF9C27B0),
+      Color(0xFF3F51B5),
+      Color(0xFF2196F3),
+      Color(0xFF009688),
+      Color(0xFF4CAF50),
+      Color(0xFFFF9800),
+      Color(0xFF795548),
+      Color(0xFF607D8B),
+      Color(0xFFF44336),
+    ];
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _surfaceLowest,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Pilih Tema',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: _onSurface,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Warna dominan akan diterapkan ke seluruh tampilan.',
+              style: TextStyle(fontSize: 13, color: _onSurfaceVariant),
+            ),
+            const SizedBox(height: 20),
+            Wrap(
+              spacing: 14,
+              runSpacing: 14,
+              children: presets.map((color) {
+                final isSelected =
+                    themeProvider.primaryColor.value == color.value;
+                return GestureDetector(
+                  onTap: () {
+                    themeProvider.setPrimaryColor(color);
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected ? _onSurface : Colors.transparent,
+                        width: 3,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: color.withOpacity(0.4),
+                                blurRadius: 10,
+                                spreadRadius: 2,
+                              ),
+                            ]
+                          : [],
+                    ),
+                    child: isSelected
+                        ? const Icon(Icons.check, color: Colors.white, size: 20)
+                        : null,
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
       ),
     );
   }
