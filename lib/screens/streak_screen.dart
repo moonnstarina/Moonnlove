@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/partner_service.dart';
 
 const Color _background = Color(0xFFF8F9FA);
 const Color _primary = Color(0xFF964549);
@@ -11,6 +12,8 @@ const Color _surfaceContainerHigh = Color(0xFFE7E8E9);
 const Color _secondaryContainer = Color(0xFFF1DEDE);
 const Color _outlineVariant = Color(0xFFDAC1C0);
 
+const _milestones = [7, 30, 50, 100, 200, 365];
+
 class StreakScreen extends StatefulWidget {
   const StreakScreen({super.key});
 
@@ -21,6 +24,10 @@ class StreakScreen extends StatefulWidget {
 class _StreakScreenState extends State<StreakScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulse;
+  final _partnerService = PartnerService();
+
+  Map<String, bool> _streakDates = {};
+  bool _loading = true;
 
   @override
   void initState() {
@@ -29,6 +36,7 @@ class _StreakScreenState extends State<StreakScreen>
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
+    _load();
   }
 
   @override
@@ -37,12 +45,43 @@ class _StreakScreenState extends State<StreakScreen>
     super.dispose();
   }
 
+  Future<void> _load() async {
+    await _partnerService.markActiveToday();
+    final dates = await _partnerService.getStreakDates();
+    if (!mounted) return;
+    setState(() {
+      _streakDates = dates;
+      _loading = false;
+    });
+  }
+
+  int get _streak {
+    final now = DateTime.now();
+    final today = _dateKey(now);
+    final yesterday = _dateKey(now.subtract(const Duration(days: 1)));
+    var count = 0;
+    var cursor = _streakDates[today] == true ? today : (_streakDates[yesterday] == true ? yesterday : null);
+    if (cursor == null) return 0;
+    while (true) {
+      count++;
+      final date = DateTime.parse(cursor).subtract(const Duration(days: 1));
+      cursor = _dateKey(date);
+      if (_streakDates[cursor] != true) break;
+    }
+    return count;
+  }
+
+  String _dateKey(DateTime d) {
+    return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
     final firstWeekday =
         DateTime(now.year, now.month, 1).weekday; // 1=Mon .. 7=Sun
+    final streak = _streak;
 
     return Scaffold(
       backgroundColor: _background,
@@ -59,22 +98,24 @@ class _StreakScreenState extends State<StreakScreen>
             children: [
               _buildTopBar(),
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 24,
-                  ),
-                  children: [
-                    _buildHero(),
-                    const SizedBox(height: 32),
-                    _buildCalendarCard(now, daysInMonth, firstWeekday),
-                    const SizedBox(height: 24),
-                    _buildMilestoneCard(),
-                    const SizedBox(height: 24),
-                    _buildActionButton(),
-                    const SizedBox(height: 16),
-                  ],
-                ),
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ListView(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 24,
+                        ),
+                        children: [
+                          _buildHero(streak),
+                          const SizedBox(height: 32),
+                          _buildCalendarCard(now, daysInMonth, firstWeekday),
+                          const SizedBox(height: 24),
+                          _buildMilestoneCard(streak),
+                          const SizedBox(height: 24),
+                          _buildActionButton(),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
               ),
             ],
           ),
@@ -101,13 +142,13 @@ class _StreakScreenState extends State<StreakScreen>
               ),
             ),
           ),
-          const Icon(Icons.more_horiz_rounded, color: _onSurfaceVariant),
+          Icon(Icons.more_horiz_rounded, color: _onSurfaceVariant),
         ],
       ),
     );
   }
 
-  Widget _buildHero() {
+  Widget _buildHero(int streak) {
     return Column(
       children: [
         const SizedBox(height: 24),
@@ -126,9 +167,9 @@ class _StreakScreenState extends State<StreakScreen>
                   size: 160,
                   color: Color(0xFFFFB3B4),
                 ),
-                const Text(
-                  '23',
-                  style: TextStyle(
+                Text(
+                  '$streak',
+                  style: const TextStyle(
                     fontSize: 44,
                     fontWeight: FontWeight.w800,
                     color: _onPrimary,
@@ -221,7 +262,7 @@ class _StreakScreenState extends State<StreakScreen>
               for (var i = 0; i < firstWeekday - 1; i++)
                 const SizedBox(),
               for (var day = 1; day <= daysInMonth; day++)
-                _buildDayCell(day, today, active: day <= today),
+                _buildDayCell(day, today),
             ],
           ),
         ],
@@ -229,8 +270,9 @@ class _StreakScreenState extends State<StreakScreen>
     );
   }
 
-  Widget _buildDayCell(int day, int today, {required bool active}) {
+  Widget _buildDayCell(int day, int today) {
     final isToday = day == today;
+    final active = _isActiveDay(today, day);
     return Center(
       child: Container(
         width: 36,
@@ -281,7 +323,24 @@ class _StreakScreenState extends State<StreakScreen>
     );
   }
 
-  Widget _buildMilestoneCard() {
+  bool _isActiveDay(int today, int day) {
+    final now = DateTime.now();
+    final date = DateTime(now.year, now.month, day);
+    if (date.isAfter(DateTime(now.year, now.month, now.day))) return false;
+    return _streakDates[_dateKey(date)] == true;
+  }
+
+  Widget _buildMilestoneCard(int streak) {
+    int? next;
+    for (final m in _milestones) {
+      if (streak < m) {
+        next = m;
+        break;
+      }
+    }
+    final target = next ?? 365;
+    final progress = (streak / target).clamp(0.0, 1.0);
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -305,8 +364,8 @@ class _StreakScreenState extends State<StreakScreen>
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
+                children: [
+                  const Text(
                     'MILESTONE',
                     style: TextStyle(
                       fontSize: 12,
@@ -315,19 +374,19 @@ class _StreakScreenState extends State<StreakScreen>
                       letterSpacing: 1,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
-                    '30 Days',
-                    style: TextStyle(
+                    next == null ? '365+ Days' : '$target Days',
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: _onSurface,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
-                    'Next milestone',
-                    style: TextStyle(
+                    next == null ? 'Legendary streak!' : 'Next milestone',
+                    style: const TextStyle(
                       fontSize: 12,
                       color: _onSurfaceVariant,
                     ),
@@ -337,16 +396,16 @@ class _StreakScreenState extends State<StreakScreen>
               Text.rich(
                 TextSpan(
                   children: [
-                    const TextSpan(
-                      text: '23',
-                      style: TextStyle(
+                    TextSpan(
+                      text: '$streak',
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: _primary,
                       ),
                     ),
                     TextSpan(
-                      text: '/30 Days',
+                      text: '/$target Days',
                       style: TextStyle(
                         fontSize: 14,
                         color: _onSurfaceVariant.withOpacity(0.8),
@@ -365,7 +424,7 @@ class _StreakScreenState extends State<StreakScreen>
               color: _secondaryContainer,
               child: FractionallySizedBox(
                 alignment: Alignment.centerLeft,
-                widthFactor: 0.76,
+                widthFactor: progress,
                 child: Container(
                   decoration: BoxDecoration(
                     color: _primary,
@@ -390,7 +449,7 @@ class _StreakScreenState extends State<StreakScreen>
     return SizedBox(
       width: double.infinity,
       child: TextButton(
-        onPressed: () {},
+        onPressed: () => _showMilestones(),
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
           backgroundColor: _secondaryContainer.withOpacity(0.5),
@@ -402,6 +461,71 @@ class _StreakScreenState extends State<StreakScreen>
         child: const Text(
           'Lihat Semua',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        ),
+      ),
+    );
+  }
+
+  void _showMilestones() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _surfaceLowest,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Center(
+                child: Text(
+                  'Milestones',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: _onSurface,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              for (final m in _milestones)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _streak >= m
+                            ? Icons.emoji_events_rounded
+                            : Icons.lock_rounded,
+                        size: 22,
+                        color: _streak >= m ? _primary : _onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        '$m Days',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: _onSurface,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        _streak >= m ? 'Tercapai 🎉' : '${m - _streak} hari lagi',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: _streak >= m ? _primary : _onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

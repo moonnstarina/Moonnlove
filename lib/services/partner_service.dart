@@ -226,4 +226,27 @@ class PartnerService {
     final photosRef = await getPhotosRef();
     await photosRef?.child(photoId).update({'caption': caption});
   }
+
+  Future<void> markActiveToday() async {
+    final coupleId = await getCoupleId();
+    if (coupleId == null) return;
+    final now = DateTime.now();
+    final key = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    await _couplesRef
+        .child(coupleId)
+        .child('streak_dates')
+        .child(key)
+        .set(true);
+  }
+
+  Future<Map<String, bool>> getStreakDates() async {
+    final coupleId = await getCoupleId();
+    if (coupleId == null) return {};
+    final event = await _couplesRef.child(coupleId).child('streak_dates').once();
+    final value = event.snapshot.value;
+    if (value is Map) {
+      return value.map((k, v) => MapEntry(k.toString(), v == true));
+    }
+    return {};
+  }
 }
