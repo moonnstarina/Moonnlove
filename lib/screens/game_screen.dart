@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/partner_service.dart';
 
 const Color _background = Color(0xFFF8F9FA);
 const Color _primary = Color(0xFF964549);
@@ -27,6 +28,7 @@ class _GameScreenState extends State<GameScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _floatController;
   late final Animation<double> _floatOffset;
+  final _partnerService = PartnerService();
 
   static const _games = [
     (
@@ -106,6 +108,31 @@ class _GameScreenState extends State<GameScreen>
         behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+
+  Future<void> _sendGameAction(String gameName, {required bool invite}) async {
+    try {
+      await _partnerService.sendGameMessage(gameName, invite: invite);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(invite
+                ? 'Ajakan bermain $gameName terkirim! 🎮'
+                : 'Notifikasi $gameName terkirim! 🎮'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -349,7 +376,10 @@ class _GameScreenState extends State<GameScreen>
               ),
               const SizedBox(width: 12),
               GestureDetector(
-                onTap: _comingSoon,
+                onTap: () => _sendGameAction(
+                  game.title,
+                  invite: !game.playing,
+                ),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
@@ -386,32 +416,95 @@ class _GameScreenState extends State<GameScreen>
   }
 
   Widget _buildAddGameCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _outlineVariant, width: 2),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.add_circle_rounded,
-            color: _onSurfaceVariant,
-            size: 20,
-          ),
-          const SizedBox(width: 8),
-          const Text(
-            'Tambah Game',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+    return GestureDetector(
+      onTap: _addGame,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: _surfaceContainerLow,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _outlineVariant, width: 2),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.add_circle_rounded,
               color: _onSurfaceVariant,
+              size: 20,
             ),
+            const SizedBox(width: 8),
+            const Text(
+              'Tambah Game',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: _onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _addGame() async {
+    final controller = TextEditingController();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFFFFFFFF),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text(
+          'Tambah Game',
+          style: TextStyle(fontWeight: FontWeight.w700, color: _onSurface),
+        ),
+        content: TextField(
+          controller: controller,
+          maxLength: 30,
+          style: const TextStyle(color: _onSurface),
+          decoration: InputDecoration(
+            hintText: 'Nama game...',
+            hintStyle: const TextStyle(color: _onSurfaceVariant),
+            filled: true,
+            fillColor: _surfaceContainerLow,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+          ),
+          onSubmitted: (v) => Navigator.pop(context, v.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Batal',
+              style: TextStyle(color: _onSurfaceVariant),
+            ),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            style: FilledButton.styleFrom(
+              backgroundColor: _primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+            child: const Text('Simpan'),
           ),
         ],
       ),
     );
+    if (name != null && name.isNotEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$name berhasil ditambahkan ke daftarmu!'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 }

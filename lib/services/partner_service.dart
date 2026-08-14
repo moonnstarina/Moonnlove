@@ -262,4 +262,48 @@ class PartnerService {
     await ref.putFile(File(filePath));
     return await ref.getDownloadURL();
   }
+
+  Future<void> sendGameMessage(String gameName, {bool invite = true}) async {
+    final uid = currentUid;
+    if (uid == null) throw Exception('Not logged in');
+    final coupleId = await getCoupleId();
+    if (coupleId == null) throw Exception('Belum terhubung dengan pasangan');
+
+    final message = invite
+        ? 'Ajak main $gameName yuk! 🎮'
+        : 'Lagi main $gameName nih! Main bareng yuk? 🎮';
+    await _couplesRef
+        .child(coupleId)
+        .child('messages')
+        .push()
+        .set({
+          'sender_uid': uid,
+          'message': message,
+          'type': 'game',
+          'game_name': gameName,
+          'timestamp': ServerValue.timestamp,
+          'is_read': false,
+        });
+  }
+
+  Future<void> sendAnniversaryMessage() async {
+    final uid = currentUid;
+    if (uid == null) throw Exception('Not logged in');
+    final coupleId = await getCoupleId();
+    if (coupleId == null) throw Exception('Belum terhubung dengan pasangan');
+    final myData = await _authService.getUserData(uid);
+    final myName = myData?['name']?.toString() ?? 'Aku';
+
+    await _couplesRef
+        .child(coupleId)
+        .child('messages')
+        .push()
+        .set({
+          'sender_uid': uid,
+          'message': '$myName mengingatkanmu: hari ini tanggal jadian kita! 🎉',
+          'type': 'anniversary',
+          'timestamp': ServerValue.timestamp,
+          'is_read': false,
+        });
+  }
 }
