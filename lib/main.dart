@@ -44,9 +44,7 @@ class _Root extends StatelessWidget {
           return MaterialApp(
             title: 'MoonnLove',
             debugShowCheckedModeBanner: false,
-            theme: themeProvider.lightTheme,
-            darkTheme: themeProvider.darkTheme,
-            themeMode: themeProvider.themeMode,
+            theme: themeProvider.theme,
             initialRoute: '/',
             routes: {
               '/': (context) => const AuthGate(),

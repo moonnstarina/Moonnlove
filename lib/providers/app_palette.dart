@@ -34,7 +34,10 @@ class AppPalette {
   static Color errorContainer = const Color(0xFFFFDAD6);
 
   static void update(Color seed) {
-    final s = ColorScheme.fromSeed(seedColor: seed);
+    final s = ColorScheme.fromSeed(
+      seedColor: seed,
+      brightness: Brightness.dark,
+    );
     background = s.surface;
     primary = s.primary;
     primaryContainer = s.primaryContainer;
