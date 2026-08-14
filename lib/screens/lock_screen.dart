@@ -24,14 +24,14 @@ class LockScreen extends StatefulWidget {
 class _LockScreenState extends State<LockScreen> {
   final _lockService = AppLockService();
   String _pin = '';
-  bool _error = false;
+  bool _hasError = false;
   bool _verifying = false;
 
   void _onDigit(String d) {
     if (_pin.length >= 4 || _verifying) return;
     setState(() {
       _pin += d;
-      _error = false;
+      _hasError = false;
     });
     if (_pin.length == 4) {
       _verify();
@@ -42,7 +42,7 @@ class _LockScreenState extends State<LockScreen> {
     if (_pin.isEmpty || _verifying) return;
     setState(() {
       _pin = _pin.substring(0, _pin.length - 1);
-      _error = false;
+      _hasError = false;
     });
   }
 
@@ -55,7 +55,7 @@ class _LockScreenState extends State<LockScreen> {
     } else {
       setState(() {
         _pin = '';
-        _error = true;
+        _hasError = true;
         _verifying = false;
       });
     }
@@ -100,7 +100,7 @@ class _LockScreenState extends State<LockScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(4, (i) {
                       final filled = i < _pin.length;
-                      final color = _error
+                      final color = _hasError
                           ? _error
                           : filled
                               ? _primary
@@ -117,7 +117,7 @@ class _LockScreenState extends State<LockScreen> {
                       );
                     }),
                   ),
-                  if (_error) ...[
+                  if (_hasError) ...[
                     const SizedBox(height: 14),
                     Text(
                       'PIN salah, coba lagi',
