@@ -21,6 +21,7 @@ Color get _secondaryContainer => AppPalette.secondaryContainer;
 Color get _error => AppPalette.error;
 Color get _errorContainer => AppPalette.errorContainer;
 Color get _surfaceVariant => AppPalette.surfaceVariant;
+Color get _surfaceLowest => AppPalette.surfaceLowest;
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -487,7 +488,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Pilih Tema',
               style: TextStyle(
                 fontSize: 18,
