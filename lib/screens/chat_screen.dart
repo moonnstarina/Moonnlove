@@ -671,9 +671,9 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildInputBar(Color primaryColor) {
     return Container(
       decoration: BoxDecoration(
-        color: _background.withOpacity(0.95),
+        color: _surfaceLowest,
         border: Border(
-          top: BorderSide(color: _surfaceVariant, width: 0.4),
+          top: BorderSide(color: _outlineVariant.withOpacity(0.4), width: 0.4),
         ),
         boxShadow: [
           BoxShadow(
