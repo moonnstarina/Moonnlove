@@ -263,6 +263,30 @@ class PartnerService {
     return await ref.getDownloadURL();
   }
 
+  Future<DatabaseReference?> getGamesRef() async {
+    final coupleId = await getCoupleId();
+    if (coupleId == null) return null;
+    return _couplesRef.child(coupleId).child('games');
+  }
+
+  Future<void> addGame(String name) async {
+    final uid = currentUid;
+    if (uid == null) throw Exception('Not logged in');
+    final coupleId = await getCoupleId();
+    if (coupleId == null) throw Exception('Belum terhubung dengan pasangan');
+    await _couplesRef.child(coupleId).child('games').push().set({
+      'name': name,
+      'added_by_uid': uid,
+      'timestamp': ServerValue.timestamp,
+    });
+  }
+
+  Future<void> removeGame(String gameId) async {
+    final coupleId = await getCoupleId();
+    if (coupleId == null) return;
+    await _couplesRef.child(coupleId).child('games').child(gameId).remove();
+  }
+
   Future<void> sendGameMessage(String gameName, {bool invite = true}) async {
     final uid = currentUid;
     if (uid == null) throw Exception('Not logged in');

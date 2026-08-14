@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import '../services/game_detector_service.dart';
 import '../services/partner_service.dart';
@@ -27,6 +28,8 @@ class _GameInfo {
     required this.color,
     required this.bg,
     required this.glow,
+    this.isCustom = false,
+    this.firebaseKey,
   });
 
   final IconData icon;
@@ -34,6 +37,8 @@ class _GameInfo {
   final Color color;
   final Color bg;
   final Color glow;
+  final bool isCustom;
+  final String? firebaseKey;
   bool playing = false;
   DateTime? playingSince;
 }
@@ -52,6 +57,8 @@ class _GameScreenState extends State<GameScreen>
   final _partnerService = PartnerService();
 
   late final List<_GameInfo> _games;
+  final List<_GameInfo> _customGames = [];
+  StreamSubscription<DatabaseEvent>? _gamesSub;
   Timer? _detectTimer;
   bool _hasPermission = false;
   bool _detecting = false;
@@ -104,6 +111,37 @@ class _GameScreenState extends State<GameScreen>
       ),
     ];
     _initDetection();
+    _initCustomGames();
+  }
+
+  Future<void> _initCustomGames() async {
+    final ref = await _partnerService.getGamesRef();
+    if (ref == null || !mounted) return;
+    _gamesSub = ref.onValue.listen((event) {
+      if (!mounted) return;
+      final value = event.snapshot.value;
+      final games = <_GameInfo>[];
+      if (value is Map) {
+        value.forEach((key, raw) {
+          if (raw is Map) {
+            games.add(_GameInfo(
+              icon: Icons.sports_esports_rounded,
+              title: raw['name']?.toString() ?? 'Game',
+              color: _primary,
+              bg: const Color(0x33FF999C),
+              glow: const Color(0x1AFF999C),
+              isCustom: true,
+              firebaseKey: key.toString(),
+            ));
+          }
+        });
+      }
+      setState(() {
+        _customGames
+          ..clear()
+          ..addAll(games);
+      });
+    });
   }
 
   Future<void> _initDetection() async {
@@ -157,6 +195,7 @@ class _GameScreenState extends State<GameScreen>
 
   @override
   void dispose() {
+    _gamesSub?.cancel();
     _detectTimer?.cancel();
     _floatController.dispose();
     super.dispose();
@@ -232,6 +271,27 @@ class _GameScreenState extends State<GameScreen>
                   for (var i = 0; i < _games.length; i++) ...[
                     _buildGameCard(i, _games[i]),
                     const SizedBox(height: 16),
+                  ],
+                  if (_customGames.isNotEmpty) ...[
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Daftar bareng',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: _onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    for (var i = 0; i < _customGames.length; i++) ...[
+                      _buildGameCard(i, _customGames[i]),
+                      const SizedBox(height: 16),
+                    ],
                   ],
                   _buildAddGameCard(),
                 ],
@@ -405,105 +465,108 @@ class _GameScreenState extends State<GameScreen>
   }
 
   Widget _buildGameCard(int index, _GameInfo game) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _surfaceLowest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.transparent),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -40,
-            bottom: -40,
-            child: Container(
-              width: 128,
-              height: 128,
-              decoration: BoxDecoration(
-                color: game.glow,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Row(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
+    return GestureDetector(
+      onLongPress: game.isCustom ? () => _removeGame(game) : null,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: _surfaceLowest,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.transparent),
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -40,
+              bottom: -40,
+              child: Container(
+                width: 128,
+                height: 128,
                 decoration: BoxDecoration(
-                  color: game.bg,
+                  color: game.glow,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(game.icon, color: game.color, size: 28),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      game.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: _onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _statusText(game),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight:
-                            game.playing ? FontWeight.w700 : FontWeight.w400,
-                        color: game.playing ? _primary : _onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              GestureDetector(
-                onTap: () => _sendGameAction(
-                  game.title,
-                  invite: !game.playing,
-                ),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 10,
-                  ),
+            ),
+            Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
                   decoration: BoxDecoration(
-                    color: game.playing ? _primaryContainer : _primary,
-                    borderRadius: BorderRadius.circular(999),
-                    boxShadow: game.playing
-                        ? []
-                        : [
-                            BoxShadow(
-                              color: _primary.withOpacity(0.2),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                    color: game.bg,
+                    shape: BoxShape.circle,
                   ),
-                  child: Text(
-                    game.playing ? 'Kirim Notif' : 'Ajak Main',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: game.playing ? _onPrimaryContainer : _onPrimary,
+                  child: Icon(game.icon, color: game.color, size: 28),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        game.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: _onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        game.isCustom ? 'Not Playing' : _statusText(game),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight:
+                              game.playing ? FontWeight.w700 : FontWeight.w400,
+                          color: game.playing ? _primary : _onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: () => _sendGameAction(
+                    game.title,
+                    invite: !game.playing,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: game.playing ? _primaryContainer : _primary,
+                      borderRadius: BorderRadius.circular(999),
+                      boxShadow: game.playing
+                          ? []
+                          : [
+                              BoxShadow(
+                                color: _primary.withOpacity(0.2),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                    ),
+                    child: Text(
+                      game.playing ? 'Kirim Notif' : 'Ajak Main',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: game.playing ? _onPrimaryContainer : _onPrimary,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -590,23 +653,68 @@ class _GameScreenState extends State<GameScreen>
       ),
     );
     if (name != null && name.isNotEmpty) {
-      setState(() {
-        _games.add(_GameInfo(
-          icon: Icons.sports_esports_rounded,
-          title: name,
-          color: _primary,
-          bg: const Color(0x33FF999C),
-          glow: const Color(0x1AFF999C),
-        ));
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$name berhasil ditambahkan ke daftarmu!'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+      try {
+        await _partnerService.addGame(name);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$name ditambahkan ke daftar bareng!'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$e'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       }
+    }
+  }
+
+  Future<void> _removeGame(_GameInfo game) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFFFFFFFF),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(
+          'Hapus ${game.title}?',
+          style: const TextStyle(fontWeight: FontWeight.w700, color: _onSurface),
+        ),
+        content: const Text(
+          'Game akan dihapus dari daftar bareng untuk kalian berdua.',
+          style: TextStyle(color: _onSurfaceVariant),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(
+              'Batal',
+              style: TextStyle(color: _onSurfaceVariant),
+            ),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: _primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && game.firebaseKey != null) {
+      try {
+        await _partnerService.removeGame(game.firebaseKey!);
+      } catch (_) {}
     }
   }
 }
