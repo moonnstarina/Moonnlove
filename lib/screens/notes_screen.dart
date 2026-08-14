@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'music_player_screen.dart';
+
 const Color _background = Color(0xFFF8F9FA);
 const Color _primary = Color(0xFF964549);
 const Color _primaryContainer = Color(0xFFFF999C);
@@ -360,7 +362,9 @@ class _NotesScreenState extends State<NotesScreen> {
 
   Widget _buildTrackTile(int index, ({String cover, String title, String artist}) track) {
     final isPlaying = _playing && index == _playingIndex;
-    return Container(
+    return GestureDetector(
+      onTap: () => _openPlayer(index),
+      child: Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isPlaying ? _primaryFixed : _surfaceContainerLowest,
@@ -447,6 +451,20 @@ class _NotesScreenState extends State<NotesScreen> {
             ),
           ),
         ],
+      ),
+      ),
+    );
+  }
+
+  void _openPlayer(int index) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MusicPlayerScreen(
+          tracks: _tracks,
+          initialIndex: index,
+          note: _notes[index % _notes.length].desc,
+        ),
       ),
     );
   }
