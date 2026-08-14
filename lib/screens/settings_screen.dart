@@ -417,12 +417,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onTap: _showThemePicker,
           ),
           _buildMenuTile(
-            icon: Icons.settings_rounded,
-            label: 'Pengaturan Akun',
-            onTap: () =>
-                Navigator.pushNamed(context, '/account-settings'),
-          ),
-          _buildMenuTile(
             icon: Icons.lock_rounded,
             label: 'Privasi',
             onTap: _comingSoon,
