@@ -46,6 +46,11 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     'Yogyakarta',
   ];
 
+  static const _descriptions = [
+    'Sore itu di Jimbaran terasa begitu magis. Angin laut yang sepoi-sepoi membawa aroma garam dan kebahagiaan yang tak terlukiskan. Kita duduk berdua di atas pasir yang masih hangat, menyaksikan matahari perlahan tenggelam di ufuk barat, mengubah langit menjadi kanvas warna merah muda dan jingga yang memukau.',
+    'Momen sederhana seperti ini yang membuat segalanya terasa berarti. Tertawa bersama sambil menikmati jagung bakar dan suara ombak yang tenang. Sebuah kenangan yang akan selalu tersimpan rapi di sudut hati yang paling hangat.',
+  ];
+
   bool _liked = false;
 
   @override
@@ -105,18 +110,31 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
   }
 
   Widget _buildPhotoCard(int index) {
-    final photoNumber = (index % 6) + 1;
+    final photoAsset = index == 0
+        ? 'assets/images/sunset.jpg'
+        : 'assets/images/album${(index % 6) + 1}.jpg';
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: AspectRatio(
-        aspectRatio: 4 / 5,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x1F964549),
+              blurRadius: 30,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        child: AspectRatio(
+          aspectRatio: 4 / 5,
         child: Stack(
           fit: StackFit.expand,
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(24),
               child: Image.asset(
-                'assets/images/album$photoNumber.jpg',
+                photoAsset,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Container(
                   decoration: const BoxDecoration(
@@ -134,13 +152,13 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                 ),
               ),
             ),
-            DecoratedBox(
+            const DecoratedBox(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                gradient: const LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [Colors.black54, Colors.transparent],
+                borderRadius: BorderRadius.all(Radius.circular(24)),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Colors.black54],
                 ),
               ),
             ),
@@ -164,13 +182,16 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                   ),
                   child: Icon(
                     Icons.favorite_rounded,
-                    color: _liked ? const Color(0xFFFF999C) : Colors.white,
+                    color: _liked
+                        ? _primaryContainer
+                        : Colors.white,
                   ),
                 ),
               ),
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -181,78 +202,65 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            _titles[index],
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: _onSurface,
+            ),
+          ),
+          const SizedBox(height: 8),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _titles[index],
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: _onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.calendar_month_rounded,
-                          size: 16,
-                          color: _onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _dates[index],
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: _onSurfaceVariant,
-                          ),
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8),
-                          child: Text('•', style: TextStyle(color: _outlineVariant)),
-                        ),
-                        const Icon(
-                          Icons.location_on_rounded,
-                          size: 16,
-                          color: _onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _places[index],
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: _onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+              const Icon(
+                Icons.calendar_month_rounded,
+                size: 16,
+                color: _onSurfaceVariant,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                _dates[index],
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: _onSurfaceVariant,
                 ),
               ),
-              GestureDetector(
-                onTap: () {},
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFEDEEEF),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.share_rounded,
-                    color: _onSurface,
-                    size: 20,
-                  ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8),
+                child: Text('•', style: TextStyle(color: _outlineVariant)),
+              ),
+              const Icon(
+                Icons.location_on_rounded,
+                size: 16,
+                color: _onSurfaceVariant,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                _places[index],
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: _onSurfaceVariant,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+          for (final paragraph in _descriptions)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                paragraph,
+                style: const TextStyle(
+                  fontSize: 14,
+                  height: 1.5,
+                  color: _onSurfaceVariant,
+                ),
+              ),
+            ),
+          const SizedBox(height: 4),
+          const Divider(height: 1, thickness: 1, color: _outlineVariant),
+          const SizedBox(height: 12),
           Row(
             children: [
               _interaction(
