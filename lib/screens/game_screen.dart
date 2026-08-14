@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import '../services/game_detector_service.dart';
 import '../services/partner_service.dart';
 
 const Color _background = Color(0xFFF8F9FA);
@@ -17,6 +20,24 @@ const Color _secondaryContainer = Color(0xFFF1DEDE);
 const Color _tertiary = Color(0xFF6E595A);
 const Color _tertiaryContainer = Color(0xFFCAAFAF);
 
+class _GameInfo {
+  _GameInfo({
+    required this.icon,
+    required this.title,
+    required this.color,
+    required this.bg,
+    required this.glow,
+  });
+
+  final IconData icon;
+  final String title;
+  final Color color;
+  final Color bg;
+  final Color glow;
+  bool playing = false;
+  DateTime? playingSince;
+}
+
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
 
@@ -30,58 +51,10 @@ class _GameScreenState extends State<GameScreen>
   late final Animation<double> _floatOffset;
   final _partnerService = PartnerService();
 
-  static const _games = [
-    (
-      icon: Icons.local_fire_department_rounded,
-      title: 'Free Fire',
-      status: 'Not Playing',
-      playing: false,
-      color: _primary,
-      bg: Color(0x33FF999C),
-      glow: Color(0x1AFF999C),
-      button: 'Ajak Main',
-    ),
-    (
-      icon: Icons.sports_martial_arts_rounded,
-      title: 'Mobile Legends',
-      status: 'Playing for 20 mins',
-      playing: true,
-      color: _tertiary,
-      bg: Color(0x33CAAFAF),
-      glow: Color(0x1ACAAFAF),
-      button: 'Kirim Notif',
-    ),
-    (
-      icon: Icons.grid_view_rounded,
-      title: 'Minecraft',
-      status: 'Not Playing',
-      playing: false,
-      color: _secondary,
-      bg: Color(0x66F1DEDE),
-      glow: Color(0x33F1DEDE),
-      button: 'Ajak Main',
-    ),
-    (
-      icon: Icons.emoji_people_rounded,
-      title: 'Super Sus',
-      status: 'Not Playing',
-      playing: false,
-      color: _primary,
-      bg: Color(0x33FF999C),
-      glow: Color(0x1AFF999C),
-      button: 'Ajak Main',
-    ),
-    (
-      icon: Icons.category_rounded,
-      title: 'Roblox',
-      status: 'Not Playing',
-      playing: false,
-      color: _tertiary,
-      bg: Color(0x33CAAFAF),
-      glow: Color(0x1ACAAFAF),
-      button: 'Ajak Main',
-    ),
-  ];
+  late final List<_GameInfo> _games;
+  Timer? _detectTimer;
+  bool _hasPermission = false;
+  bool _detecting = false;
 
   @override
   void initState() {
@@ -93,21 +66,106 @@ class _GameScreenState extends State<GameScreen>
     _floatOffset = Tween<double>(begin: 0, end: -5).animate(
       CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
     );
+    _games = [
+      _GameInfo(
+        icon: Icons.local_fire_department_rounded,
+        title: 'Free Fire',
+        color: _primary,
+        bg: const Color(0x33FF999C),
+        glow: const Color(0x1AFF999C),
+      ),
+      _GameInfo(
+        icon: Icons.sports_martial_arts_rounded,
+        title: 'Mobile Legends',
+        color: _tertiary,
+        bg: const Color(0x33CAAFAF),
+        glow: const Color(0x1ACAAFAF),
+      ),
+      _GameInfo(
+        icon: Icons.grid_view_rounded,
+        title: 'Minecraft',
+        color: _secondary,
+        bg: const Color(0x66F1DEDE),
+        glow: const Color(0x33F1DEDE),
+      ),
+      _GameInfo(
+        icon: Icons.emoji_people_rounded,
+        title: 'Super Sus',
+        color: _primary,
+        bg: const Color(0x33FF999C),
+        glow: const Color(0x1AFF999C),
+      ),
+      _GameInfo(
+        icon: Icons.category_rounded,
+        title: 'Roblox',
+        color: _tertiary,
+        bg: const Color(0x33CAAFAF),
+        glow: const Color(0x1ACAAFAF),
+      ),
+    ];
+    _initDetection();
+  }
+
+  Future<void> _initDetection() async {
+    _hasPermission = await GameDetectorService.hasUsagePermission();
+    if (mounted) {
+      setState(() {});
+    }
+    _detectTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => _checkForegroundGame(),
+    );
+    _checkForegroundGame();
+  }
+
+  Future<void> _checkForegroundGame() async {
+    if (_detecting) return;
+    if (!_hasPermission) return;
+    _detecting = true;
+    final package = await GameDetectorService.getForegroundPackage();
+    final detected = GameDetectorService.gameNameForPackage(package);
+    final since = await GameDetectorService.getForegroundSince();
+    if (!mounted) {
+      _detecting = false;
+      return;
+    }
+    setState(() {
+      for (final game in _games) {
+        if (game.title == detected) {
+          if (!game.playing) {
+            game.playing = true;
+            game.playingSince = since ?? DateTime.now();
+          }
+        } else {
+          game.playing = false;
+          game.playingSince = null;
+        }
+      }
+    });
+    _detecting = false;
+  }
+
+  Future<void> _requestPermission() async {
+    await GameDetectorService.openUsageSettings();
+    await Future.delayed(const Duration(seconds: 2));
+    _hasPermission = await GameDetectorService.hasUsagePermission();
+    if (mounted) {
+      setState(() {});
+      if (_hasPermission) _checkForegroundGame();
+    }
   }
 
   @override
   void dispose() {
+    _detectTimer?.cancel();
     _floatController.dispose();
     super.dispose();
   }
 
-  void _comingSoon() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Fitur ini segera hadir!'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+  String _statusText(_GameInfo game) {
+    if (!game.playing) return 'Not Playing';
+    final elapsed = DateTime.now().difference(game.playingSince!).inMinutes;
+    return 'Playing for $elapsed mins';
   }
 
   Future<void> _sendGameAction(String gameName, {required bool invite}) async {
@@ -170,6 +228,7 @@ class _GameScreenState extends State<GameScreen>
                     ),
                   ),
                   const SizedBox(height: 24),
+                  if (!_hasPermission) _buildPermissionBanner(),
                   for (var i = 0; i < _games.length; i++) ...[
                     _buildGameCard(i, _games[i]),
                     const SizedBox(height: 16),
@@ -180,6 +239,52 @@ class _GameScreenState extends State<GameScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPermissionBanner() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _primaryContainer.withOpacity(0.25),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.visibility_rounded, color: _onPrimaryContainer),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Text(
+              'Izinkan akses penggunaan aplikasi untuk mendeteksi game yang sedang dimainkan.',
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.3,
+                color: _onPrimaryContainer,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: _requestPermission,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: _primary,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: const Text(
+                'Izinkan',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: _onPrimary,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -299,19 +404,7 @@ class _GameScreenState extends State<GameScreen>
     );
   }
 
-  Widget _buildGameCard(
-    int index,
-    ({
-      IconData icon,
-      String title,
-      String status,
-      bool playing,
-      Color color,
-      Color bg,
-      Color glow,
-      String button,
-    }) game,
-  ) {
+  Widget _buildGameCard(int index, _GameInfo game) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -361,7 +454,7 @@ class _GameScreenState extends State<GameScreen>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      game.status,
+                      _statusText(game),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -399,7 +492,7 @@ class _GameScreenState extends State<GameScreen>
                           ],
                   ),
                   child: Text(
-                    game.button,
+                    game.playing ? 'Kirim Notif' : 'Ajak Main',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -497,6 +590,15 @@ class _GameScreenState extends State<GameScreen>
       ),
     );
     if (name != null && name.isNotEmpty) {
+      setState(() {
+        _games.add(_GameInfo(
+          icon: Icons.sports_esports_rounded,
+          title: name,
+          color: _primary,
+          bg: const Color(0x33FF999C),
+          glow: const Color(0x1AFF999C),
+        ));
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
