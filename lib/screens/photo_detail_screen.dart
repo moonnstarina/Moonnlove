@@ -403,7 +403,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                       caption.isEmpty
                           ? 'Tambahkan caption...'
                           : caption,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         color: caption.isEmpty
                             ? _onSurfaceVariant

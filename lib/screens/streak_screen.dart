@@ -64,7 +64,7 @@ class _StreakScreenState extends State<StreakScreen>
     if (cursor == null) return 0;
     while (true) {
       count++;
-      final date = DateTime.parse(cursor).subtract(const Duration(days: 1));
+      final date = DateTime.parse(cursor!).subtract(const Duration(days: 1));
       cursor = _dateKey(date);
       if (_streakDates[cursor] != true) break;
     }
@@ -515,7 +515,7 @@ class _StreakScreenState extends State<StreakScreen>
                       const Spacer(),
                       Text(
                         _streak >= m ? 'Tercapai 🎉' : '${m - _streak} hari lagi',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: _streak >= m ? _primary : _onSurfaceVariant,
