@@ -189,7 +189,7 @@ class PartnerService {
     if (coupleId == null) throw Exception('Belum terhubung dengan pasangan');
 
     final ref = FirebaseStorage.instance.ref().child(
-          'photos/$coupleId/${DateTime.now().millisecondsSinceEpoch}_$uid.jpg',
+          'photos/$uid/${DateTime.now().millisecondsSinceEpoch}_$uid.jpg',
         );
     await ref.putFile(File(filePath));
     final url = await ref.getDownloadURL();
@@ -257,7 +257,7 @@ class PartnerService {
     if (coupleId == null) throw Exception('Belum terhubung dengan pasangan');
 
     final ref = FirebaseStorage.instance.ref().child(
-          'chat_images/$coupleId/${DateTime.now().millisecondsSinceEpoch}_$uid.jpg',
+          'chat_images/$uid/${DateTime.now().millisecondsSinceEpoch}_$uid.jpg',
         );
     await ref.putFile(File(filePath));
     return await ref.getDownloadURL();

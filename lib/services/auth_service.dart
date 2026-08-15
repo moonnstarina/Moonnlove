@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -8,50 +9,51 @@ class AuthService {
   User? get currentUser => _auth.currentUser;
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  Future<UserCredential> register(String email, String password, String name) async {
-    final result = await _auth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
+  /// Google verifies ownership of the account before Firebase receives it.
+  Future<UserCredential?> signInWithGoogle() async {
+    final googleUser = await GoogleSignIn(scopes: const ['email']).signIn();
+    if (googleUser == null) return null;
+
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
     );
-
-    await result.user?.updateDisplayName(name);
-    await result.user?.reload();
-
-    try {
-      await _db.child('users/${result.user!.uid}').set({
-        'uid': result.user!.uid,
-        'name': name,
-        'email': email,
-        'photo_url': '',
-        'partner_uid': '',
-        'couple_id': '',
-        'invite_code': '',
-        'theme_primary_color': 0xFFE91E63,
-        'theme_mode': 'light',
-        'created_at': DateTime.now().millisecondsSinceEpoch,
-      }).timeout(const Duration(seconds: 5), onTimeout: () {
-        // Timeout, skip simpan data
-      });
-    } catch (e) {
-      // Gagal simpan, skip
+    final result = await _auth.signInWithCredential(credential);
+    final user = result.user;
+    if (user == null || !user.emailVerified) {
+      await _auth.signOut();
+      throw FirebaseAuthException(
+        code: 'email-not-verified',
+        message: 'Akun Google harus memiliki email yang terverifikasi.',
+      );
     }
-
+    await _createProfileIfNeeded(user);
     return result;
   }
 
-  Future<UserCredential> login(String email, String password) async {
-    return await _auth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+  Future<void> _createProfileIfNeeded(User user) async {
+    final ref = _db.child('users/${user.uid}');
+    final existing = await ref.once();
+    if (existing.snapshot.exists) return;
+
+    await ref.set({
+      'uid': user.uid,
+      'name': user.displayName ?? 'MoonnLove User',
+      'email': user.email ?? '',
+      'photo_url': user.photoURL ?? '',
+      'partner_uid': '',
+      'couple_id': '',
+      'invite_code': '',
+      'theme_primary_color': 0xFFE91E63,
+      'theme_mode': 'light',
+      'created_at': ServerValue.timestamp,
+    });
   }
 
   Future<void> logout() async {
+    await GoogleSignIn().signOut();
     await _auth.signOut();
-  }
-
-  Future<void> resetPassword(String email) async {
-    await _auth.sendPasswordResetEmail(email: email);
   }
 
   Future<Map<String, dynamic>?> getUserData(String uid) async {
@@ -60,7 +62,7 @@ class AuthService {
       if (event.snapshot.value != null) {
         return Map<String, dynamic>.from(event.snapshot.value as Map);
       }
-    } catch (e) {
+    } catch (_) {
       return null;
     }
     return null;
@@ -69,26 +71,16 @@ class AuthService {
   String getErrorMessage(Object e) {
     if (e is FirebaseAuthException) {
       switch (e.code) {
-        case 'invalid-email':
-          return 'Format email tidak valid';
-        case 'user-disabled':
-          return 'Akun kamu telah dinonaktifkan';
-        case 'user-not-found':
-          return 'Email tidak terdaftar';
-        case 'wrong-password':
-          return 'Password salah';
+        case 'email-not-verified':
+          return 'Email Google belum terverifikasi. Verifikasi dulu di akun Google kamu.';
         case 'invalid-credential':
-          return 'Email atau password salah';
-        case 'email-already-in-use':
-          return 'Email sudah terdaftar, gunakan email lain';
-        case 'weak-password':
-          return 'Password terlalu lemah (minimal 6 karakter)';
+          return 'Login Google tidak dapat diverifikasi.';
         case 'too-many-requests':
-          return 'Terlalu banyak percobaan, coba lagi nanti';
+          return 'Terlalu banyak percobaan, coba lagi nanti.';
         case 'network-request-failed':
-          return 'Tidak ada koneksi internet';
+          return 'Tidak ada koneksi internet.';
         case 'operation-not-allowed':
-          return 'Metode login tidak diizinkan';
+          return 'Login Google belum diaktifkan di Firebase.';
         default:
           return 'Terjadi kesalahan: ${e.message ?? e.code}';
       }

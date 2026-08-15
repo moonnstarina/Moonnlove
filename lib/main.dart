@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:provider/provider.dart';
 import 'services/auth_service.dart';
 import 'providers/theme_provider.dart';
 import 'screens/login_screen.dart';
-import 'screens/register_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/main_shell.dart';
 import 'screens/chat_screen.dart';
@@ -29,6 +29,13 @@ void main() async {
     statusBarIconBrightness: Brightness.light,
   ));
   await Firebase.initializeApp();
+  await FirebaseAppCheck.instance.activate(
+    androidProvider: AndroidProvider.playIntegrity,
+    appleProvider: AppleProvider.appAttestWithDeviceCheckFallback,
+    webProvider: ReCaptchaV3Provider(
+      const String.fromEnvironment('RECAPTCHA_V3_SITE_KEY'),
+    ),
+  );
   runApp(const _Root());
 }
 
@@ -49,7 +56,6 @@ class _Root extends StatelessWidget {
             routes: {
               '/': (context) => const AuthGate(),
               '/login': (context) => const LoginScreen(),
-              '/register': (context) => const RegisterScreen(),
               '/home': (context) => const MainShell(),
               '/chat': (context) => const ChatScreen(),
               '/location': (context) => const LocationScreen(),
@@ -84,7 +90,9 @@ class AuthGate extends StatelessWidget {
           );
         }
         final user = snapshot.data;
-        if (user != null) {
+        if (user != null &&
+            user.emailVerified &&
+            user.providerData.any((profile) => profile.providerId == 'google.com')) {
           return const _LockGate(child: MainShell());
         }
         return const LoginScreen();
