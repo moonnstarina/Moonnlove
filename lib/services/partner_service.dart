@@ -333,6 +333,26 @@ class PartnerService {
         });
   }
 
+  Future<void> sendInteraction(String key, String message) async {
+    final uid = currentUid;
+    if (uid == null) throw Exception('Not logged in');
+    final coupleId = await getCoupleId();
+    if (coupleId == null) throw Exception('Belum terhubung dengan pasangan');
+
+    await _couplesRef
+        .child(coupleId)
+        .child('messages')
+        .push()
+        .set({
+          'sender_uid': uid,
+          'message': message,
+          'type': 'interaction',
+          'interaction': key,
+          'timestamp': ServerValue.timestamp,
+          'is_read': false,
+        });
+  }
+
   Future<void> sendAnniversaryMessage() async {
     final uid = currentUid;
     if (uid == null) throw Exception('Not logged in');

@@ -416,6 +416,11 @@ class _ChatScreenState extends State<ChatScreen> {
     final isRead = msg['is_read'] == true;
     final isPhoto = msg['type'] == 'photo';
     final photoUrl = msg['url']?.toString() ?? '';
+    final isInteraction = msg['type'] == 'interaction';
+
+    if (isInteraction) {
+      return _buildInteractionBubble(msg, maxWidth);
+    }
 
     if (isPhoto) {
       return Align(
@@ -632,6 +637,68 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildInteractionBubble(Map<String, dynamic> msg, double maxWidth) {
+    const emojiMap = {
+      'heart': '❤️',
+      'hug': '🤗',
+      'kiss': '😘',
+      'miss': '🥺',
+      'mood': '😊',
+    };
+    final emoji = emojiMap[msg['interaction']] ?? '💌';
+    final text = msg['message'] ?? '';
+    final timeText = _formatTime(msg['timestamp']);
+    final isRead = msg['is_read'] == true;
+
+    return Align(
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
+            decoration: BoxDecoration(
+              color: _primaryContainer.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(emoji, style: const TextStyle(fontSize: 40)),
+                const SizedBox(height: 8),
+                Text(
+                  text,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: _onPrimaryContainer,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                timeText,
+                style: TextStyle(fontSize: 10, color: _onSurfaceVariant),
+              ),
+              const SizedBox(width: 3),
+              Icon(
+                isRead ? Icons.done_all_rounded : Icons.done_rounded,
+                size: 14,
+                color: isRead ? _primary : _onSurfaceVariant,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

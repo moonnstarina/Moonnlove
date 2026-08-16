@@ -21,6 +21,7 @@ import 'screens/streak_screen.dart';
 import 'screens/lock_screen.dart';
 import 'screens/lock_settings_screen.dart';
 import 'services/app_lock_service.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,6 +37,7 @@ void main() async {
       const String.fromEnvironment('RECAPTCHA_V3_SITE_KEY'),
     ),
   );
+  await NotificationService.init();
   runApp(const _Root());
 }
 
@@ -51,6 +53,7 @@ class _Root extends StatelessWidget {
           return MaterialApp(
             title: 'MoonnLove',
             debugShowCheckedModeBanner: false,
+            navigatorKey: appNavigatorKey,
             theme: themeProvider.lightTheme,
             initialRoute: '/',
             routes: {

@@ -213,6 +213,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildHeroCard(),
+                    const SizedBox(height: 24),
+                    _buildInteractionBar(),
                     const SizedBox(height: 32),
                     _buildTimeTogetherCard(),
                     const SizedBox(height: 32),
@@ -341,6 +343,113 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         Icons.favorite,
         size: 80,
         color: _primary,
+      ),
+    );
+  }
+
+  Future<void> _sendInteraction(String key, String label) async {
+    if (!_paired) {
+      _showComingSoon();
+      return;
+    }
+    const messages = {
+      'heart': 'Mengirim cinta buat kamu ❤️',
+      'hug': 'Mengirim pelukan hangat 🤗',
+      'kiss': 'Mengirim ciuman 😘',
+      'miss': 'Kangen kamu 🥺',
+      'mood': 'Gimana kabarmu hari ini? 😊',
+    };
+    try {
+      await _partnerService.sendInteraction(key, messages[key] ?? label);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Terkirim ke $_partnerName 💌'),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildInteractionBar() {
+    const items = [
+      (key: 'heart', emoji: '❤️', label: 'Send Love'),
+      (key: 'hug', emoji: '🤗', label: 'Hug'),
+      (key: 'kiss', emoji: '😘', label: 'Ciuman'),
+      (key: 'miss', emoji: '🥺', label: 'I Miss You'),
+      (key: 'mood', emoji: '😊', label: 'Check Mood'),
+    ];
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+      decoration: BoxDecoration(
+        color: _surfaceLowest,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: _primary.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(
+            'Kirim ke pasangan',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: _onSurface,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: items.map((item) {
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _sendInteraction(item.key, item.label),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: _primaryContainer.withOpacity(0.3),
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        item.emoji,
+                        style: const TextStyle(fontSize: 24),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      item.label,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: _onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }
