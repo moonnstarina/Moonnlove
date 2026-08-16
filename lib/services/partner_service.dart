@@ -23,27 +23,26 @@ class PartnerService {
     if (uid == null) throw Exception('Not logged in');
 
     final data = await _authService.getUserData(uid);
-    final existing = data?['invite_code'];
-    if (existing != null && existing.toString().isNotEmpty) {
-      return existing.toString();
+    final existing = data?['invite_code']?.toString() ?? '';
+    if (existing.isNotEmpty) {
+      final holder = await _db.ref().child('codes/$existing').once();
+      if (holder.snapshot.value?.toString() == uid) return existing;
     }
 
-    String code = generateCode();
-    final taken = await _isCodeTaken(code);
-    while (taken) {
-      code = generateCode();
+    for (var i = 0; i < 20; i++) {
+      final code = generateCode();
+      final result = await _db.ref().child('codes/$code').runTransaction(
+        (node) {
+          if (node != null) return Transaction.abort();
+          return Transaction.success(uid);
+        },
+      );
+      if (result.committed) {
+        await _usersRef.child(uid).update({'invite_code': code});
+        return code;
+      }
     }
-
-    await _usersRef.child(uid).update({'invite_code': code});
-    return code;
-  }
-
-  Future<bool> _isCodeTaken(String code) async {
-    final event = await _usersRef
-        .orderByChild('invite_code')
-        .equalTo(code)
-        .once();
-    return event.snapshot.value != null;
+    throw Exception('Gagal membuat kode unik, coba lagi');
   }
 
   Future<Map<String, dynamic>> pairByCode(String code) async {
@@ -55,17 +54,11 @@ class PartnerService {
       throw Exception('Kode harus 6 digit');
     }
 
-    final event = await _usersRef
-        .orderByChild('invite_code')
-        .equalTo(codeTrimmed)
-        .once();
-
-    final snapshot = event.snapshot;
-    if (snapshot.value == null) {
+    final codeEvent = await _db.ref().child('codes/$codeTrimmed').once();
+    final partnerUid = codeEvent.snapshot.value?.toString();
+    if (partnerUid == null) {
       throw Exception('Kode tidak ditemukan');
     }
-
-    final partnerUid = (snapshot.value as Map).keys.first;
     if (partnerUid == uid) {
       throw Exception('Gak bisa pairing dengan diri sendiri');
     }
@@ -85,8 +78,11 @@ class PartnerService {
     final updates = <String, Object?>{};
     updates['users/$uid/partner_uid'] = partnerUid;
     updates['users/$uid/couple_id'] = coupleId;
+    updates['users/$uid/invite_code'] = '';
     updates['users/$partnerUid/partner_uid'] = uid;
     updates['users/$partnerUid/couple_id'] = coupleId;
+    updates['users/$partnerUid/invite_code'] = '';
+    updates['codes/$codeTrimmed'] = null;
     updates['couples/$coupleId'] = {
       'uid1': uid,
       'uid2': partnerUid,
@@ -100,6 +96,32 @@ class PartnerService {
       'partner_uid': partnerUid,
       'partner_name': partnerData?['name'] ?? 'Partner',
     };
+  }
+
+  Future<void> unpair() async {
+    final uid = currentUid;
+    if (uid == null) throw Exception('Not logged in');
+
+    final myData = await _authService.getUserData(uid);
+    final partnerUid = myData?['partner_uid']?.toString();
+    final coupleId = myData?['couple_id']?.toString();
+
+    if (partnerUid == null || partnerUid.isEmpty) {
+      throw Exception('Kamu belum terhubung dengan pasangan');
+    }
+
+    final updates = <String, Object?>{
+      'users/$uid/partner_uid': '',
+      'users/$uid/couple_id': '',
+      'users/$uid/invite_code': '',
+      'users/$partnerUid/partner_uid': '',
+      'users/$partnerUid/couple_id': '',
+      'users/$partnerUid/invite_code': '',
+    };
+    if (coupleId != null && coupleId.isNotEmpty) {
+      updates['couples/$coupleId'] = null;
+    }
+    await _db.ref().update(updates);
   }
 
   String _makeCoupleId(String a, String b) {

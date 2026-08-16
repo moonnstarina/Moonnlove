@@ -2,11 +2,17 @@
   "rules": {
     ".read": false,
     ".write": false,
+    "codes": {
+      ".read": "auth != null && auth.token.email_verified === true && auth.token.firebase.sign_in_provider === 'google.com'",
+      "$code": {
+        ".write": "auth != null && auth.token.email_verified === true && auth.token.firebase.sign_in_provider === 'google.com' && (data.val() === auth.uid || newData.val() === auth.uid || newData.val() === null)"
+      }
+    },
     "users": {
       ".indexOn": ["invite_code"],
       "$uid": {
         ".read": "auth != null && auth.token.email_verified === true && auth.token.firebase.sign_in_provider === 'google.com' && (auth.uid === $uid || data.child('partner_uid').val() === auth.uid)",
-        ".write": "auth != null && auth.token.email_verified === true && auth.token.firebase.sign_in_provider === 'google.com' && (auth.uid === $uid || (!data.child('partner_uid').exists() && newData.child('partner_uid').val() === auth.uid))",
+        ".write": "auth != null && auth.token.email_verified === true && auth.token.firebase.sign_in_provider === 'google.com' && (auth.uid === $uid || data.child('partner_uid').val() === auth.uid || (!data.child('partner_uid').exists() && newData.child('partner_uid').val() === auth.uid))",
         ".validate": "newData.hasChildren(['uid', 'name', 'email', 'partner_uid', 'couple_id', 'invite_code', 'created_at']) && newData.child('uid').val() === $uid && newData.child('name').isString() && newData.child('name').val().length <= 80 && ((auth.uid === $uid && newData.child('email').val() === auth.token.email) || (auth.uid !== $uid && newData.child('email').val() === data.child('email').val()))"
       }
     },

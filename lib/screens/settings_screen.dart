@@ -302,6 +302,208 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (mounted) setState(() => _userName = result);
   }
 
+  Future<void> _connectPartner() async {
+    String? myCode;
+    try {
+      myCode = await _partnerService.getMyCode();
+    } catch (_) {}
+    final codeController = TextEditingController();
+    final submitted = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Hubungkan dengan Pasangan'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (myCode != null) ...[
+              Text(
+                'Kode kamu (kirim ke pasangan):',
+                style: TextStyle(fontSize: 13, color: _onSurfaceVariant),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  color: _primaryContainer.withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  myCode,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 6,
+                    color: _onPrimaryContainer,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            TextField(
+              controller: codeController,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              textAlign: TextAlign.center,
+              decoration: const InputDecoration(
+                hintText: 'Kode pasangan (6 digit)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () =>
+                Navigator.pop(dialogContext, codeController.text.trim()),
+            style: ElevatedButton.styleFrom(backgroundColor: _primary),
+            child: const Text('Hubungkan',
+                style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (submitted == null || submitted.isEmpty || !mounted) return;
+    try {
+      await _partnerService.pairByCode(submitted);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Kamu berhasil terhubung dengan pasangan!'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _disconnectPartner() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Yakin mau putus?'),
+        content: const Text(
+          'Hubungan dengan pasanganmu akan diputus dan data couple dihapus. Tindakan ini tidak bisa dibatalkan.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Tidak'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: ElevatedButton.styleFrom(backgroundColor: _error),
+            child: const Text('Ya, Putus',
+                style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+
+    final verifyCode = _partnerService.generateCode();
+    final codeController = TextEditingController();
+    final submitted = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Verifikasi Kode'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Masukkan kode berikut untuk mengonfirmasi putus hubungan:',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: _onSurfaceVariant),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              verifyCode,
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 8,
+                color: _error,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: codeController,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              textAlign: TextAlign.center,
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText: 'Ketik kode di atas',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () =>
+                Navigator.pop(dialogContext, codeController.text.trim()),
+            style: ElevatedButton.styleFrom(backgroundColor: _error),
+            child: const Text('OK', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (submitted == null || !mounted) return;
+
+    if (submitted != verifyCode) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Kode salah, hubungan tidak diputus'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    try {
+      await _partnerService.unpair();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Kamu sudah putus dari pasangan'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     context.watch<ThemeProvider>();
@@ -406,6 +608,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Column(
         children: [
+          if (_paired) ...[
+            _buildMenuTile(
+              icon: Icons.favorite_rounded,
+              label: 'Kamu sudah terhubung',
+              showChevron: false,
+              onTap: () {},
+            ),
+            _buildMenuTile(
+              icon: Icons.link_off_rounded,
+              label: 'Putus Hubungan',
+              color: _error,
+              bg: _errorContainer.withOpacity(0.5),
+              showChevron: false,
+              onTap: _disconnectPartner,
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child:
+                  Divider(height: 1, thickness: 1, color: _surfaceVariant),
+            ),
+          ] else
+            _buildMenuTile(
+              icon: Icons.favorite_rounded,
+              label: 'Hubungkan',
+              onTap: _connectPartner,
+            ),
           _buildMenuTile(
             icon: Icons.edit_rounded,
             label: 'Edit Profile',
