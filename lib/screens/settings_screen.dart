@@ -5,7 +5,6 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/auth_service.dart';
 import '../services/partner_service.dart';
@@ -275,11 +274,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       }
       try {
-        final ref = FirebaseStorage.instance
-            .ref()
-            .child('profiles/${user.uid}.jpg');
-        await ref.putData(await File(picked!.path).readAsBytes());
-        photoUrl = await ref.getDownloadURL();
+        photoUrl = await _partnerService.uploadProfilePhoto(picked!.path);
       } catch (_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

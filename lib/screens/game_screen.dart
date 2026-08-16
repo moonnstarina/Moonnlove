@@ -5,6 +5,7 @@ import 'dart:async';
 
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
 import '../services/game_detector_service.dart';
 import '../services/partner_service.dart';
 
@@ -54,20 +55,26 @@ class GameScreen extends StatefulWidget {
 }
 
 class _GameScreenState extends State<GameScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late final AnimationController _floatController;
   late final Animation<double> _floatOffset;
   final _partnerService = PartnerService();
+  final _authService = AuthService();
 
   final List<_GameInfo> _customGames = [];
   StreamSubscription<DatabaseEvent>? _gamesSub;
+  StreamSubscription<DatabaseEvent>? _nowPlayingSub;
   Timer? _detectTimer;
   bool _hasPermission = false;
   bool _detecting = false;
+  String? _mePlaying;
+  Map<String, dynamic>? _partnerPlaying;
+  DateTime? _partnerSince;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _floatController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
@@ -77,11 +84,18 @@ class _GameScreenState extends State<GameScreen>
     );
     _initDetection();
     _initCustomGames();
+    _initNowPlaying();
   }
 
   Future<void> _initCustomGames() async {
     final ref = await _partnerService.getGamesRef();
-    if (ref == null || !mounted) return;
+    if (ref == null) {
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted && _gamesSub == null) _initCustomGames();
+      });
+      return;
+    }
+    _gamesSub?.cancel();
     _gamesSub = ref.onValue.listen((event) {
       if (!mounted) return;
       final value = event.snapshot.value;
@@ -109,6 +123,39 @@ class _GameScreenState extends State<GameScreen>
     });
   }
 
+  Future<void> _initNowPlaying() async {
+    final ref = await _partnerService.getNowPlayingRef();
+    if (ref == null) {
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted && _nowPlayingSub == null) _initNowPlaying();
+      });
+      return;
+    }
+    _nowPlayingSub?.cancel();
+    _nowPlayingSub = ref.onValue.listen((event) {
+      if (!mounted) return;
+      final value = event.snapshot.value;
+      Map<String, dynamic>? partner;
+      DateTime? partnerSince;
+      final myUid = _authService.currentUser?.uid;
+      if (value is Map) {
+        value.forEach((key, raw) {
+          if (key.toString() != myUid && raw is Map) {
+            partner = raw.cast<String, dynamic>();
+            final since = raw['since'];
+            if (since is int) {
+              partnerSince = DateTime.fromMillisecondsSinceEpoch(since);
+            }
+          }
+        });
+      }
+      setState(() {
+        _partnerPlaying = partner;
+        _partnerSince = partnerSince;
+      });
+    });
+  }
+
   Future<void> _initDetection() async {
     _hasPermission = await GameDetectorService.hasUsagePermission();
     if (mounted) {
@@ -124,9 +171,38 @@ class _GameScreenState extends State<GameScreen>
   Future<void> _checkForegroundGame() async {
     if (_detecting) return;
     if (!_hasPermission) return;
+    if (_customGames.isEmpty) return;
     _detecting = true;
     final package = await GameDetectorService.getForegroundPackage();
     final since = await GameDetectorService.getForegroundSince();
+
+    _GameInfo? detected;
+    for (final game in _customGames) {
+      final hasPackage = game.package?.isNotEmpty == true;
+      final matched = hasPackage
+          ? package == game.package
+          : GameDetectorService.gameNameForPackage(package) == game.title;
+      if (matched) {
+        detected = game;
+        break;
+      }
+    }
+
+    if (detected?.title != _mePlaying) {
+      _mePlaying = detected?.title;
+      try {
+        if (detected != null) {
+          await _partnerService.setNowPlaying(
+            package ?? '',
+            detected.title,
+            since ?? DateTime.now(),
+          );
+        } else {
+          await _partnerService.clearNowPlaying();
+        }
+      } catch (_) {}
+    }
+
     if (!mounted) {
       _detecting = false;
       return;
@@ -153,25 +229,54 @@ class _GameScreenState extends State<GameScreen>
 
   Future<void> _requestPermission() async {
     await GameDetectorService.openUsageSettings();
-    await Future.delayed(const Duration(seconds: 2));
-    _hasPermission = await GameDetectorService.hasUsagePermission();
-    if (mounted) {
-      setState(() {});
-      if (_hasPermission) _checkForegroundGame();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshOnResume();
     }
+  }
+
+  Future<void> _refreshOnResume() async {
+    await Future.delayed(const Duration(milliseconds: 400));
+    _hasPermission = await GameDetectorService.hasUsagePermission();
+    if (mounted) setState(() {});
+    if (_hasPermission) _checkForegroundGame();
+    if (_gamesSub == null) _initCustomGames();
+    if (_nowPlayingSub == null) _initNowPlaying();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _gamesSub?.cancel();
+    _nowPlayingSub?.cancel();
     _detectTimer?.cancel();
     _floatController.dispose();
     super.dispose();
   }
 
+  bool _isPartnerPlaying(_GameInfo game) {
+    final p = _partnerPlaying;
+    if (p == null) return false;
+    final package = p['package']?.toString();
+    final name = p['game']?.toString();
+    final hasPackage = game.package?.isNotEmpty == true;
+    if (package != null && package.isNotEmpty) {
+      return hasPackage
+          ? package == game.package
+          : GameDetectorService.gameNameForPackage(package) == game.title;
+    }
+    return name == game.title;
+  }
+
   String _statusText(_GameInfo game) {
-    if (!game.playing) return 'Not Playing';
-    final elapsed = DateTime.now().difference(game.playingSince!).inMinutes;
+    final local = game.playing;
+    final partner = _isPartnerPlaying(game);
+    if (!local && !partner) return 'Not Playing';
+    final since = local ? game.playingSince! : _partnerSince!;
+    final elapsed = DateTime.now().difference(since).inMinutes;
     return 'Playing for $elapsed mins';
   }
 
@@ -417,6 +522,7 @@ class _GameScreenState extends State<GameScreen>
   }
 
   Widget _buildGameCard(int index, _GameInfo game) {
+    final playingNow = game.playing || _isPartnerPlaying(game);
     return GestureDetector(
       onLongPress: () => _removeGame(game),
       child: Container(
@@ -474,8 +580,8 @@ class _GameScreenState extends State<GameScreen>
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight:
-                              game.playing ? FontWeight.w700 : FontWeight.w400,
-                          color: game.playing ? _primary : _onSurfaceVariant,
+                              playingNow ? FontWeight.w700 : FontWeight.w400,
+                          color: playingNow ? _primary : _onSurfaceVariant,
                         ),
                       ),
                     ],

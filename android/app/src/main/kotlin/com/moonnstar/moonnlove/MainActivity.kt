@@ -64,10 +64,16 @@ class MainActivity : FlutterActivity() {
         val event = UsageEvents.Event()
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
-            if (event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
-                if (event.packageName != packageName) {
+            if (event.packageName == packageName) continue
+            when (event.eventType) {
+                UsageEvents.Event.MOVE_TO_FOREGROUND -> {
                     lastPackage = event.packageName
                     lastTime = event.timeStamp
+                }
+                UsageEvents.Event.MOVE_TO_BACKGROUND -> {
+                    if (event.packageName == lastPackage) {
+                        lastPackage = null
+                    }
                 }
             }
         }

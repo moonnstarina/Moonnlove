@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
+import 'package:http/http.dart' as http;
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import '../services/auth_service.dart';
 
 class PartnerService {
@@ -210,11 +212,11 @@ class PartnerService {
     final coupleId = await getCoupleId();
     if (coupleId == null) throw Exception('Belum terhubung dengan pasangan');
 
-    final ref = FirebaseStorage.instance.ref().child(
-          'photos/$uid/${DateTime.now().millisecondsSinceEpoch}_$uid.jpg',
-        );
-    await ref.putFile(File(filePath));
-    final url = await ref.getDownloadURL();
+    final bytes = await File(filePath).readAsBytes();
+    if (bytes.length > 10 * 1024 * 1024) {
+      throw Exception('Ukuran foto maksimal 10MB');
+    }
+    final url = await _uploadToServer(bytes);
 
     final photosRef = await getPhotosRef();
     await photosRef?.push().set({
@@ -278,11 +280,50 @@ class PartnerService {
     final coupleId = await getCoupleId();
     if (coupleId == null) throw Exception('Belum terhubung dengan pasangan');
 
-    final ref = FirebaseStorage.instance.ref().child(
-          'chat_images/$uid/${DateTime.now().millisecondsSinceEpoch}_$uid.jpg',
-        );
-    await ref.putFile(File(filePath));
-    return await ref.getDownloadURL();
+    final bytes = await File(filePath).readAsBytes();
+    if (bytes.length > 10 * 1024 * 1024) {
+      throw Exception('Ukuran foto maksimal 10MB');
+    }
+    return _uploadToServer(bytes);
+  }
+
+  Future<String> uploadProfilePhoto(String filePath) async {
+    final uid = currentUid;
+    if (uid == null) throw Exception('Not logged in');
+
+    final bytes = await File(filePath).readAsBytes();
+    if (bytes.length > 5 * 1024 * 1024) {
+      throw Exception('Ukuran foto maksimal 5MB');
+    }
+    return _uploadToServer(bytes);
+  }
+
+  Future<String> _uploadToServer(Uint8List bytes) async {
+    final user = _authService.currentUser;
+    if (user == null) throw Exception('Not logged in');
+
+    final token = await user.getIdToken();
+    final res = await http
+        .post(
+          Uri.parse('https://media.momon.qzz.io/upload'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'image/jpeg',
+          },
+          body: bytes,
+        )
+        .timeout(const Duration(seconds: 30));
+    if (res.statusCode != 200) {
+      throw Exception('Upload gagal (${res.statusCode})');
+    }
+    try {
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      final url = data['url'] as String;
+      if (url.isEmpty) throw Exception('URL kosong');
+      return url;
+    } catch (_) {
+      throw Exception('Upload gagal');
+    }
   }
 
   Future<DatabaseReference?> getGamesRef() async {
@@ -308,6 +349,34 @@ class PartnerService {
     final coupleId = await getCoupleId();
     if (coupleId == null) return;
     await _couplesRef.child(coupleId).child('games').child(gameId).remove();
+  }
+
+  Future<void> setNowPlaying(String package, String gameName, DateTime since) async {
+    final uid = currentUid;
+    final coupleId = await getCoupleId();
+    if (uid == null || coupleId == null) return;
+    await _couplesRef
+        .child(coupleId)
+        .child('now_playing')
+        .child(uid)
+        .set({
+          'package': package,
+          'game': gameName,
+          'since': since.millisecondsSinceEpoch,
+        });
+  }
+
+  Future<void> clearNowPlaying() async {
+    final uid = currentUid;
+    final coupleId = await getCoupleId();
+    if (uid == null || coupleId == null) return;
+    await _couplesRef.child(coupleId).child('now_playing').child(uid).remove();
+  }
+
+  Future<DatabaseReference?> getNowPlayingRef() async {
+    final coupleId = await getCoupleId();
+    if (coupleId == null) return null;
+    return _couplesRef.child(coupleId).child('now_playing');
   }
 
   Future<void> sendGameMessage(String gameName, {bool invite = true}) async {
