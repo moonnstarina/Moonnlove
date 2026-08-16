@@ -15,6 +15,7 @@ import 'notification_settings_screen.dart';
 Color get _background => AppPalette.background;
 Color get _primary => AppPalette.primary;
 Color get _primaryContainer => AppPalette.primaryContainer;
+Color get _onPrimaryContainer => AppPalette.onPrimaryContainer;
 Color get _onSurface => AppPalette.onSurface;
 Color get _onSurfaceVariant => AppPalette.onSurfaceVariant;
 Color get _secondaryContainer => AppPalette.secondaryContainer;
