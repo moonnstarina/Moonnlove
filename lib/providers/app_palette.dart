@@ -50,6 +50,42 @@ class AppPalette {
   static void update(Color seed, {Brightness brightness = Brightness.light}) {
     final s = ColorScheme.fromSeed(seedColor: seed, brightness: brightness);
     isDark = brightness == Brightness.dark;
+
+    if (isDark) {
+      background = const Color(0xFF10141C);
+      primary = const Color(0xFF964549);
+      primaryContainer = const Color(0xFFFF999C);
+      onPrimaryContainer = const Color(0xFF792E33);
+      onPrimary = const Color(0xFFFFFFFF);
+      onSurface = const Color(0xFFFFFFFF);
+      onSurfaceVariant = const Color(0xFFE5E7EB);
+      onSecondaryContainer = const Color(0xFFF5E4E4);
+      surfaceLowest = const Color(0xFF1A1A2E);
+      surfaceContainerLowest = const Color(0xFF1A1A2E);
+      surfaceContainer = const Color(0xFF202536);
+      surfaceContainerLow = const Color(0xFF252B3B);
+      surfaceContainerHigh = const Color(0xFF2B3245);
+      surfaceContainerHighest = const Color(0xFF303A4F);
+      surfaceVariant = const Color(0xFF303A4F);
+      outlineVariant = const Color(0xFF4B5563);
+      outline = const Color(0xFF9CA3AF);
+      secondary = const Color(0xFFD6C7C7);
+      secondaryContainer = const Color(0xFF3A2D2F);
+      secondaryFixed = const Color(0xFF3A2D2F);
+      tertiary = const Color(0xFFE0C7C7);
+      tertiaryContainer = const Color(0xFF4A3A3D);
+      tertiaryFixed = const Color(0xFF4A3A3D);
+      onTertiaryFixed = const Color(0xFFFFFFFF);
+      onTertiaryFixedVariant = const Color(0xFFE5E7EB);
+      inverseSurface = const Color(0xFFF5F5F5);
+      inverseOnSurface = const Color(0xFF111827);
+      inversePrimary = const Color(0xFFFFB3B4);
+      primaryFixed = const Color(0xFFFFDAD9);
+      error = s.error;
+      errorContainer = s.errorContainer;
+      return;
+    }
+
     background = s.surface;
     primary = s.primary;
     primaryContainer = s.primaryContainer;
