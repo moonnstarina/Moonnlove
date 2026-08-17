@@ -116,16 +116,29 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  bool _isGifUrl(String text) {
+    final lower = text.toLowerCase();
+    if (!lower.startsWith('http')) return false;
+    if (lower.contains('.gif')) return true;
+    if (lower.contains('giphy.com') || lower.contains('tenor.com')) return true;
+    if (lower.contains('gifbin.com') || lower.contains('imgur.com') && lower.endsWith('.gif')) return true;
+    return false;
+  }
+
   Future<void> _sendMessage() async {
     if (_messageController.text.trim().isEmpty) return;
     final ref = _chatRef;
     final user = _authService.currentUser;
     if (ref == null || user == null) return;
 
+    final text = _messageController.text.trim();
+    final isGif = _isGifUrl(text);
+
     await ref.push().set({
       'sender_uid': user.uid,
-      'message': _messageController.text.trim(),
-      'type': 'text',
+      'message': text,
+      'type': isGif ? 'gif' : 'text',
+      if (isGif) 'gifUrl': text,
       'timestamp': ServerValue.timestamp,
       'is_read': false,
     });
@@ -598,6 +611,8 @@ class _ChatScreenState extends State<ChatScreen> {
     final isInteraction = msg['type'] == 'interaction';
     final isSticker = msg['type'] == 'sticker';
     final stickerUrl = msg['stickerUrl']?.toString() ?? '';
+    final isGif = msg['type'] == 'gif';
+    final gifUrl = msg['gifUrl']?.toString() ?? '';
 
     if (isInteraction) {
       return _buildInteractionBubble(msg, maxWidth);
@@ -624,6 +639,69 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 child: Icon(Icons.emoji_emotions_outlined,
                     color: _onSurfaceVariant, size: 40),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 4, left: 4, right: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(timeText,
+                      style: TextStyle(fontSize: 10, color: _onSurfaceVariant)),
+                  if (isMe) ...[
+                    const SizedBox(width: 3),
+                    Icon(
+                      isRead ? Icons.done_all_rounded : Icons.done_rounded,
+                      size: 14,
+                      color: isRead ? _primary : _onSurfaceVariant,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (isGif && gifUrl.isNotEmpty) {
+      return Align(
+        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: Column(
+          crossAxisAlignment:
+              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            Container(
+              constraints: BoxConstraints(maxWidth: maxWidth * 0.6),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: _surfaceVariant),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Image.network(
+                gifUrl,
+                fit: BoxFit.cover,
+                loadingBuilder: (_, child, progress) => progress == null
+                    ? child
+                    : Container(
+                        width: 200,
+                        height: 150,
+                        color: _surfaceContainer,
+                        child: const Center(child: CircularProgressIndicator()),
+                      ),
+                errorBuilder: (_, __, ___) => Container(
+                  width: 200,
+                  height: 150,
+                  color: _surfaceContainer,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.gif_box_rounded, color: _onSurfaceVariant, size: 40),
+                      const SizedBox(height: 4),
+                      Text('GIF', style: TextStyle(fontSize: 12, color: _onSurfaceVariant)),
+                    ],
+                  ),
+                ),
               ),
             ),
             Padding(
