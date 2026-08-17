@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'dart:async';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import 'music_player_screen.dart';
 
@@ -238,73 +239,27 @@ class _NotesScreenState extends State<NotesScreen> {
   }
 
   void _addTrack() async {
-    final urlCtrl = TextEditingController();
-    final titleCtrl = TextEditingController();
-    final artistCtrl = TextEditingController();
-    final result = await showDialog<bool>(
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: _surfaceContainerLowest,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Tambah Lagu', style: TextStyle(color: _onSurface)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: urlCtrl,
-              decoration: InputDecoration(
-                hintText: 'YouTube URL',
-                hintStyle: TextStyle(color: _onSurfaceVariant),
-              ),
-              keyboardType: TextInputType.url,
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: titleCtrl,
-              decoration: InputDecoration(
-                hintText: 'Judul lagu',
-                hintStyle: TextStyle(color: _onSurfaceVariant),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: artistCtrl,
-              decoration: InputDecoration(
-                hintText: 'Artis',
-                hintStyle: TextStyle(color: _onSurfaceVariant),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Batal', style: TextStyle(color: _outline)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: _primary),
-            child: Text('Tambah', style: TextStyle(color: Colors.white)),
-          ),
-        ],
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _TrackSearchSheet(
+        onSelected: (title, artist, url, coverUrl) async {
+          final ref = await _tracksRefController.future;
+          if (ref == null) return;
+          final uid = _authService.currentUser?.uid ?? '';
+          await ref.push().set({
+            'youtubeUrl': url,
+            'title': title,
+            'artist': artist.isNotEmpty ? artist : 'Unknown',
+            'coverUrl': coverUrl,
+            'addedBy': uid,
+            'likes': {uid: false},
+            'timestamp': ServerValue.timestamp,
+          });
+        },
       ),
     );
-    if (result != true) return;
-    final url = urlCtrl.text.trim();
-    final title = titleCtrl.text.trim();
-    final artist = artistCtrl.text.trim();
-    if (url.isEmpty || title.isEmpty) return;
-    final ref = await _tracksRefController.future;
-    if (ref == null) return;
-    final uid = _authService.currentUser?.uid ?? '';
-    await ref.push().set({
-      'youtubeUrl': url,
-      'title': title,
-      'artist': artist.isNotEmpty ? artist : 'Unknown',
-      'addedBy': uid,
-      'likes': {uid: false},
-      'timestamp': ServerValue.timestamp,
-    });
   }
 
   void _toggleTrackLike(int index) async {
@@ -369,43 +324,25 @@ class _NotesScreenState extends State<NotesScreen> {
   Widget _buildTopBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Stack(
-        alignment: Alignment.center,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: _surfaceContainer,
-                  shape: BoxShape.circle,
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Image.asset(
-                  'assets/images/nav_avatar.jpg',
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Icon(
-                    Icons.person,
-                    color: _onSurfaceVariant,
-                    size: 22,
-                  ),
-                ),
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: _surfaceContainer,
+                shape: BoxShape.circle,
               ),
-              const Spacer(),
-              IconButton(
-                onPressed: () {},
-                icon: Icon(
-                  Icons.notifications_rounded,
-                  color: _primary,
-                  size: 26,
-                ),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                ),
+              child: Icon(
+                Icons.arrow_back_rounded,
+                color: _onSurfaceVariant,
+                size: 22,
               ),
-            ],
+            ),
           ),
+          const Spacer(),
           Text(
             'MoonLove',
             style: TextStyle(
@@ -414,6 +351,8 @@ class _NotesScreenState extends State<NotesScreen> {
               color: _primary,
             ),
           ),
+          const Spacer(),
+          const SizedBox(width: 40),
         ],
       ),
     );
@@ -723,6 +662,203 @@ class _NotesScreenState extends State<NotesScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _TrackSearchSheet extends StatefulWidget {
+  const _TrackSearchSheet({required this.onSelected});
+
+  final void Function(String title, String artist, String url, String coverUrl)
+      onSelected;
+
+  @override
+  State<_TrackSearchSheet> createState() => _TrackSearchSheetState();
+}
+
+class _TrackSearchSheetState extends State<_TrackSearchSheet> {
+  final _searchCtrl = TextEditingController();
+  final _yt = YoutubeExplode();
+  List<SearchResult> _results = [];
+  bool _searching = false;
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _searchCtrl.dispose();
+    _yt.close();
+    super.dispose();
+  }
+
+  Future<void> _search(String query) async {
+    if (query.trim().isEmpty) return;
+    setState(() {
+      _searching = true;
+      _results = [];
+    });
+    try {
+      final searchList = await _yt.search.search(query);
+      if (!_disposed && mounted) {
+        setState(() {
+          _results = searchList.toList();
+          _searching = false;
+        });
+      }
+    } catch (_) {
+      if (!_disposed && mounted) setState(() => _searching = false);
+    }
+  }
+
+  void _select(SearchResult r) {
+    final url = 'https://www.youtube.com/watch?v=${r.id}';
+    final title = r.title;
+    final artist = r.author;
+    final coverUrl =
+        'https://img.youtube.com/vi/${r.id}/mqdefault.jpg';
+    widget.onSelected(title, artist, url, coverUrl);
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: AppPalette.surfaceContainerLowest,
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppPalette.outline,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _searchCtrl,
+                        autofocus: true,
+                        decoration: InputDecoration(
+                          hintText: 'Cari lagu di YouTube...',
+                          hintStyle:
+                              TextStyle(color: AppPalette.onSurfaceVariant),
+                          prefixIcon: Icon(Icons.search_rounded,
+                              color: AppPalette.onSurfaceVariant),
+                          filled: true,
+                          fillColor: AppPalette.surfaceContainer,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        textInputAction: TextInputAction.search,
+                        onSubmitted: _search,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: AppPalette.surfaceContainer,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.close_rounded,
+                            color: AppPalette.onSurfaceVariant),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (_searching)
+                const Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(),
+                )
+              else if (_results.isEmpty && _searchCtrl.text.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Text(
+                    'Tidak ada hasil',
+                    style: TextStyle(
+                        color: AppPalette.onSurfaceVariant, fontSize: 14),
+                  ),
+                )
+              else
+                Expanded(
+                  child: ListView.separated(
+                    controller: scrollController,
+                    itemCount: _results.length,
+                    separatorBuilder: (_, __) => Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: AppPalette.surfaceContainer,
+                    ),
+                    itemBuilder: (context, i) {
+                      final r = _results[i];
+                      return ListTile(
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            'https://img.youtube.com/vi/${r.id}/mqdefault.jpg',
+                            width: 56,
+                            height: 56,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              width: 56,
+                              height: 56,
+                              color: AppPalette.surfaceContainer,
+                              child: Icon(Icons.music_note_rounded,
+                                  color: AppPalette.onSurfaceVariant),
+                            ),
+                          ),
+                        ),
+                        title: Text(
+                          r.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppPalette.onSurface,
+                          ),
+                        ),
+                        subtitle: Text(
+                          r.author,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppPalette.onSurfaceVariant,
+                          ),
+                        ),
+                        trailing: Icon(Icons.add_circle_outline_rounded,
+                            color: AppPalette.primary),
+                        onTap: () => _select(r),
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

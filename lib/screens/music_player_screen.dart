@@ -162,44 +162,26 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   Widget _buildTopBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Stack(
-        alignment: Alignment.center,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: _surfaceContainerHigh,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: _surfaceVariant),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Image.asset(
-                  'assets/images/player_avatar.jpg',
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Icon(
-                    Icons.person,
-                    color: _onSurfaceVariant,
-                    size: 22,
-                  ),
-                ),
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: _surfaceContainerHigh,
+                shape: BoxShape.circle,
+                border: Border.all(color: _surfaceVariant),
               ),
-              const Spacer(),
-              IconButton(
-                onPressed: () {},
-                icon: Icon(
-                  Icons.notifications_rounded,
-                  color: _primary,
-                  size: 26,
-                ),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                ),
+              child: Icon(
+                Icons.arrow_back_rounded,
+                color: _onSurfaceVariant,
+                size: 22,
               ),
-            ],
+            ),
           ),
+          const Spacer(),
           Text(
             'MoonLove',
             style: TextStyle(
@@ -208,6 +190,8 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
               color: _primary,
             ),
           ),
+          const Spacer(),
+          const SizedBox(width: 40),
         ],
       ),
     );
