@@ -6,6 +6,7 @@ import '../services/partner_service.dart';
 
 Color get _background => AppPalette.background;
 Color get _primary => AppPalette.primary;
+Color get _surfaceLowest => AppPalette.surfaceLowest;
 Color get _onSurface => AppPalette.onSurface;
 Color get _onSurfaceVariant => AppPalette.onSurfaceVariant;
 Color get _secondaryContainer => AppPalette.secondaryContainer;
@@ -74,8 +75,8 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         elevation: 0,
         foregroundColor: _onSurface,
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
+        body: _loading
+          ? Center(child: CircularProgressIndicator())
           : ListView(
               padding: const EdgeInsets.all(20),
               children: [
@@ -102,7 +103,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                         value: _messages,
                         onChanged: (v) => _save('messages', v),
                       ),
-                      const Divider(
+                      Divider(
                         height: 1,
                         thickness: 1,
                         color: AppPalette.surfaceVariant,
@@ -114,7 +115,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                         value: _streak,
                         onChanged: (v) => _save('streak', v),
                       ),
-                      const Divider(
+                      Divider(
                         height: 1,
                         thickness: 1,
                         color: AppPalette.surfaceVariant,
@@ -126,7 +127,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                         value: _anniversary,
                         onChanged: (v) => _save('anniversary', v),
                       ),
-                      const Divider(
+                      Divider(
                         height: 1,
                         thickness: 1,
                         color: AppPalette.surfaceVariant,

@@ -114,7 +114,7 @@ class _LocationScreenState extends State<LocationScreen> {
         return;
       }
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
+        locationSettings: LocationSettings(
           accuracy: LocationAccuracy.medium,
           timeLimit: Duration(seconds: 20),
         ),
@@ -173,8 +173,8 @@ class _LocationScreenState extends State<LocationScreen> {
           children: [
             _buildTopBar(),
             Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
+                child: _loading
+                  ? Center(child: CircularProgressIndicator())
                   : !_paired
                       ? _buildNotPaired()
                       : _buildContent(),
@@ -293,7 +293,7 @@ class _LocationScreenState extends State<LocationScreen> {
           Container(
             width: 56,
             height: 56,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: Colors.white24,
               shape: BoxShape.circle,
             ),

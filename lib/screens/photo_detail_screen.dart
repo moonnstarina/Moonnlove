@@ -115,8 +115,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
           children: [
             _buildTopBar(),
             Expanded(
-              child: _photoRef == null
-                  ? const Center(child: CircularProgressIndicator())
+                child: _photoRef == null
+                  ? Center(child: CircularProgressIndicator())
                   : StreamBuilder<DatabaseEvent>(
                       stream: _photoRef!.onValue,
                       builder: (context, snapshot) {

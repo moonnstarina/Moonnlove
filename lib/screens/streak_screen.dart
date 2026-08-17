@@ -90,7 +90,7 @@ class _StreakScreenState extends State<StreakScreen>
     return Scaffold(
       backgroundColor: _background,
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -103,7 +103,7 @@ class _StreakScreenState extends State<StreakScreen>
               _buildTopBar(),
               Expanded(
                 child: _loading
-                    ? const Center(child: CircularProgressIndicator())
+                  ? Center(child: CircularProgressIndicator())
                     : ListView(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 20,
@@ -318,7 +318,7 @@ class _StreakScreenState extends State<StreakScreen>
                 child: Container(
                   width: 4,
                   height: 4,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
                   ),

@@ -191,8 +191,8 @@ class _PhotoAlbumScreenState extends State<PhotoAlbumScreen> {
           children: [
             _buildTopBar(),
             Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
+                child: _loading
+                  ? Center(child: CircularProgressIndicator())
                   : !_paired
                       ? _buildNotPaired()
                       : ListView(

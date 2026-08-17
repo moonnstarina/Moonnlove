@@ -210,8 +210,8 @@ class _LockSettingsScreenState extends State<LockSettingsScreen> {
         elevation: 0,
         foregroundColor: _onSurface,
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
+        body: _loading
+          ? Center(child: CircularProgressIndicator())
           : ListView(
               padding: const EdgeInsets.all(20),
               children: [

@@ -366,7 +366,7 @@ class _ChatScreenState extends State<ChatScreen> {
           _buildHeader(primaryColor),
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator())
+              ? Center(child: CircularProgressIndicator())
                 : _coupleId == null
                     ? _buildNotPaired(primaryColor)
                     : _buildMessageList(),
@@ -495,7 +495,7 @@ class _ChatScreenState extends State<ChatScreen> {
       stream: _chatRef!.orderByChild('timestamp').onValue,
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
-          return const Center(
+          return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -693,7 +693,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         width: 200,
                         height: 150,
                         color: _surfaceContainer,
-                        child: const Center(child: CircularProgressIndicator()),
+                        child: Center(child: CircularProgressIndicator()),
                       ),
                 errorBuilder: (_, __, ___) => Container(
                   width: 200,
@@ -768,7 +768,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           width: 220,
                           height: 220,
                           color: _surfaceContainer,
-                          child: const Center(
+                          child: Center(
                             child: CircularProgressIndicator(),
                           ),
                         ),

@@ -423,7 +423,7 @@ class _GameScreenState extends State<GameScreen>
               child: Container(
                 width: 40,
                 height: 40,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -458,7 +458,7 @@ class _GameScreenState extends State<GameScreen>
             width: 192,
             height: 192,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => const Icon(
+            errorBuilder: (_, __, ___) => Icon(
               Icons.sports_esports_rounded,
               size: 80,
               color: AppPalette.primaryContainer,

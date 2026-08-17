@@ -106,8 +106,8 @@ class _PartnerScreenState extends State<PartnerScreen> {
         foregroundColor: _onSurface,
         title: const Text('Hubungkan Pasangan'),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
+        body: _loading
+          ? Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(

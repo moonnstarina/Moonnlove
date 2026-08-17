@@ -201,7 +201,7 @@ class _StickerPickerSheetState extends State<StickerPickerSheet> {
               ),
               Expanded(
                 child: _loading
-                    ? const Center(child: CircularProgressIndicator())
+                  ? Center(child: CircularProgressIndicator())
                     : _stickers.isEmpty
                         ? Center(
                             child: Column(

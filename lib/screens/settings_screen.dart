@@ -155,7 +155,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final fallback = Image.asset(
       'assets/images/logo.png',
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => const Icon(
+      errorBuilder: (_, __, ___) => Icon(
         Icons.person_rounded,
         size: 90,
         color: _primary,
