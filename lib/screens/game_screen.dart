@@ -453,27 +453,15 @@ class _GameScreenState extends State<GameScreen>
       builder: (context, _) => Transform.translate(
         offset: Offset(0, _floatOffset.value),
         child: Center(
-          child: Container(
+          child: Image.asset(
+            'assets/images/logo.png',
             width: 192,
             height: 192,
-            decoration: BoxDecoration(
-              color: _secondaryContainer.withOpacity(0.3),
-              shape: BoxShape.circle,
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.asset(
-                  'assets/images/logo.png',
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Icon(
-                    Icons.sports_esports_rounded,
-                    size: 80,
-                    color: Color(0x66FF999C),
-                  ),
-                ),
-              ],
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const Icon(
+              Icons.sports_esports_rounded,
+              size: 80,
+              color: Color(0x66FF999C),
             ),
           ),
         ),
