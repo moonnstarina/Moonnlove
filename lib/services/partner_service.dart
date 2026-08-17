@@ -495,4 +495,28 @@ class PartnerService {
     if (coupleId == null) return;
     await _couplesRef.child(coupleId).child('photos').child(photoId).remove();
   }
+
+  Future<DatabaseReference?> getStickersRef() async {
+    final coupleId = await getCoupleId();
+    if (coupleId == null) return null;
+    return _couplesRef.child(coupleId).child('stickers');
+  }
+
+  Future<void> addSticker(String url, String name) async {
+    final ref = await getStickersRef();
+    final uid = currentUid;
+    if (ref == null || uid == null) return;
+    await ref.push().set({
+      'url': url,
+      'name': name,
+      'addedBy': uid,
+      'timestamp': ServerValue.timestamp,
+    });
+  }
+
+  Future<void> deleteSticker(String stickerId) async {
+    final ref = await getStickersRef();
+    if (ref == null) return;
+    await ref.child(stickerId).remove();
+  }
 }

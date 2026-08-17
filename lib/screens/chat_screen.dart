@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/auth_service.dart';
 import '../services/partner_service.dart';
+import 'sticker_picker_sheet.dart';
 
 Color get _background => AppPalette.background;
 Color get _surfaceLowest => AppPalette.surfaceLowest;
@@ -185,6 +186,29 @@ class _ChatScreenState extends State<ChatScreen> {
         behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+
+  void _openStickerPicker() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => StickerPickerSheet(onSelect: _sendSticker),
+    );
+  }
+
+  Future<void> _sendSticker(String url) async {
+    final ref = _chatRef;
+    final user = _authService.currentUser;
+    if (ref == null || user == null || url.isEmpty) return;
+    await ref.push().set({
+      'sender_uid': user.uid,
+      'message': '',
+      'type': 'sticker',
+      'stickerUrl': url,
+      'timestamp': ServerValue.timestamp,
+      'is_read': false,
+    });
   }
 
   void _showChatMenu() {
@@ -572,9 +596,57 @@ class _ChatScreenState extends State<ChatScreen> {
     final isPhoto = msg['type'] == 'photo';
     final photoUrl = msg['url']?.toString() ?? '';
     final isInteraction = msg['type'] == 'interaction';
+    final isSticker = msg['type'] == 'sticker';
+    final stickerUrl = msg['stickerUrl']?.toString() ?? '';
 
     if (isInteraction) {
       return _buildInteractionBubble(msg, maxWidth);
+    }
+
+    if (isSticker && stickerUrl.isNotEmpty) {
+      return Align(
+        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: Column(
+          crossAxisAlignment:
+              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            Image.network(
+              stickerUrl,
+              width: 120,
+              height: 120,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: _surfaceContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.emoji_emotions_outlined,
+                    color: _onSurfaceVariant, size: 40),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 4, left: 4, right: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(timeText,
+                      style: TextStyle(fontSize: 10, color: _onSurfaceVariant)),
+                  if (isMe) ...[
+                    const SizedBox(width: 3),
+                    Icon(
+                      isRead ? Icons.done_all_rounded : Icons.done_rounded,
+                      size: 14,
+                      color: isRead ? _primary : _onSurfaceVariant,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     if (isPhoto) {
@@ -952,7 +1024,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       IconButton(
                         icon: const Icon(Icons.mood_rounded),
                         color: _onSurfaceVariant,
-                        onPressed: _showComingSoon,
+                        onPressed: _openStickerPicker,
                       ),
                     ],
                   ),
