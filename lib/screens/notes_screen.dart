@@ -1,7 +1,11 @@
 import '../providers/app_palette.dart';
 import '../providers/theme_provider.dart';
+import '../services/auth_service.dart';
+import '../services/partner_service.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'dart:async';
 
 import 'music_player_screen.dart';
 
@@ -25,22 +29,23 @@ Color get _outline => AppPalette.outline;
 Color get _inverseSurface => AppPalette.inverseSurface;
 Color get _inversePrimary => AppPalette.inversePrimary;
 Color get _inverseOnSurface => AppPalette.inverseOnSurface;
+Color get _error => AppPalette.error;
 
 get _softShadow => [
-  BoxShadow(
-    color: _primary.withOpacity(0.04),
-    blurRadius: 20,
-    offset: Offset(0, 4),
-  ),
-];
+      BoxShadow(
+        color: _primary.withOpacity(0.04),
+        blurRadius: 20,
+        offset: Offset(0, 4),
+      ),
+    ];
 
 get _interactiveShadow => [
-  BoxShadow(
-    color: _primary.withOpacity(0.08),
-    blurRadius: 20,
-    offset: Offset(0, 4),
-  ),
-];
+      BoxShadow(
+        color: _primary.withOpacity(0.08),
+        blurRadius: 20,
+        offset: Offset(0, 4),
+      ),
+    ];
 
 class NotesScreen extends StatefulWidget {
   const NotesScreen({super.key});
@@ -50,69 +55,287 @@ class NotesScreen extends StatefulWidget {
 }
 
 class _NotesScreenState extends State<NotesScreen> {
-  static get _notes => [
+  final _authService = AuthService();
+  final _partnerService = PartnerService();
+  final _notesRefController = Completer<DatabaseReference?>();
+  final _tracksRefController = Completer<DatabaseReference?>();
+
+  List<Map<String, dynamic>> _notes = [];
+  List<Map<String, dynamic>> _tracks = [];
+  bool _loading = true;
+  StreamSubscription<DatabaseEvent>? _notesSub;
+  StreamSubscription<DatabaseEvent>? _tracksSub;
+
+  static const _defaultNotes = [
     (
       title: 'Song for rainy days',
       desc:
           'This one always reminds me of that afternoon we spent watching the rain from the balcony with hot cocoa.',
-      bg: _surfaceContainerLowest,
-      titleColor: _primary,
-      descColor: _onSurfaceVariant,
-      badgeBg: _primaryContainer,
-      badgeIcon: Icons.push_pin_rounded,
-      badgeColor: _onPrimaryContainer,
-      rotation: 0.2,
     ),
     (
       title: 'Our first date theme',
       desc:
           "The cafe was playing this on loop. I couldn't stop looking at your eyes the whole time.",
-      bg: _tertiaryFixed,
-      titleColor: _onTertiaryFixed,
-      descColor: _onTertiaryFixedVariant,
-      badgeBg: _tertiaryContainer,
-      badgeIcon: Icons.favorite_rounded,
-      badgeColor: _onPrimaryContainer,
-      rotation: -0.1,
     ),
     (
       title: 'Road trip vibes',
       desc:
           'Add this to the queue for next weekend. Windows down, volume up!',
-      bg: _surfaceContainerLowest,
-      titleColor: _secondary,
-      descColor: _onSurfaceVariant,
-      badgeBg: _secondaryContainer,
-      badgeIcon: Icons.star_rounded,
-      badgeColor: _secondary,
-      rotation: 0.1,
     ),
   ];
 
-  static const _tracks = [
-    (
-      cover: 'assets/images/cover1.jpg',
-      title: 'Perfect',
-      artist: 'Ed Sheeran',
-    ),
-    (
-      cover: 'assets/images/cover2.jpg',
-      title: 'Lover',
-      artist: 'Taylor Swift',
-    ),
-    (
-      cover: 'assets/images/cover3.jpg',
-      title: 'Make You Feel My Love',
-      artist: 'Adele',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _initRefs();
+  }
 
-  bool _playing = true;
-  final _likes = {0: false, 1: true, 2: false};
-  int _playingIndex = 1;
+  @override
+  void dispose() {
+    _notesSub?.cancel();
+    _tracksSub?.cancel();
+    super.dispose();
+  }
 
-  void _toggleLike(int index) {
-    setState(() => _likes[index] = !(_likes[index] ?? false));
+  Future<void> _initRefs() async {
+    final notesRef = await _partnerService.getNotesRef();
+    final tracksRef = await _partnerService.getTracksRef();
+    if (!mounted) return;
+    setState(() => _loading = false);
+
+    if (notesRef != null) {
+      _notesRefController.complete(notesRef);
+      _notesSub = notesRef.onValue.listen((event) {
+        final data = event.snapshot.value;
+        final list = <Map<String, dynamic>>[];
+        if (data is Map) {
+          data.forEach((key, val) {
+            if (val is Map) {
+              final note = Map<String, dynamic>.from(val);
+              note['id'] = key.toString();
+              list.add(note);
+            }
+          });
+        }
+        if (mounted) setState(() => _notes = list);
+      });
+    } else {
+      _notesRefController.complete(null);
+    }
+
+    if (tracksRef != null) {
+      _tracksRefController.complete(tracksRef);
+      _tracksSub = tracksRef.onValue.listen((event) {
+        final data = event.snapshot.value;
+        final list = <Map<String, dynamic>>[];
+        if (data is Map) {
+          data.forEach((key, val) {
+            if (val is Map) {
+              final track = Map<String, dynamic>.from(val);
+              track['id'] = key.toString();
+              list.add(track);
+            }
+          });
+        }
+        if (mounted) setState(() => _tracks = list);
+      });
+    } else {
+      _tracksRefController.complete(null);
+    }
+  }
+
+  List<Map<String, dynamic>> get _displayNotes {
+    if (_notes.isNotEmpty) return _notes;
+    return _defaultNotes
+        .map((n) => {'title': n.title, 'desc': n.desc, 'id': null})
+        .toList();
+  }
+
+  void _addNote() async {
+    final titleCtrl = TextEditingController();
+    final descCtrl = TextEditingController();
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: _surfaceContainerLowest,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Tambah Note', style: TextStyle(color: _onSurface)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleCtrl,
+              decoration: InputDecoration(
+                hintText: 'Judul',
+                hintStyle: TextStyle(color: _onSurfaceVariant),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: descCtrl,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Deskripsi',
+                hintStyle: TextStyle(color: _onSurfaceVariant),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Batal', style: TextStyle(color: _outline)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: _primary),
+            child: Text('Simpan', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (result != true) return;
+    final title = titleCtrl.text.trim();
+    final desc = descCtrl.text.trim();
+    if (title.isEmpty) return;
+    final ref = await _notesRefController.future;
+    if (ref == null) return;
+    final uid = _authService.currentUser?.uid ?? '';
+    await ref.push().set({
+      'title': title,
+      'description': desc,
+      'creator_uid': uid,
+      'timestamp': ServerValue.timestamp,
+    });
+  }
+
+  void _deleteNote(String noteId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: _surfaceContainerLowest,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Hapus Note', style: TextStyle(color: _onSurface)),
+        content: Text('Yakin hapus note ini?',
+            style: TextStyle(color: _onSurfaceVariant)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Batal', style: TextStyle(color: _outline)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: _error),
+            child: Text('Hapus', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    final ref = await _notesRefController.future;
+    if (ref == null) return;
+    await ref.child(noteId).remove();
+  }
+
+  void _addTrack() async {
+    final urlCtrl = TextEditingController();
+    final titleCtrl = TextEditingController();
+    final artistCtrl = TextEditingController();
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: _surfaceContainerLowest,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Tambah Lagu', style: TextStyle(color: _onSurface)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: urlCtrl,
+              decoration: InputDecoration(
+                hintText: 'YouTube URL',
+                hintStyle: TextStyle(color: _onSurfaceVariant),
+              ),
+              keyboardType: TextInputType.url,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: titleCtrl,
+              decoration: InputDecoration(
+                hintText: 'Judul lagu',
+                hintStyle: TextStyle(color: _onSurfaceVariant),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: artistCtrl,
+              decoration: InputDecoration(
+                hintText: 'Artis',
+                hintStyle: TextStyle(color: _onSurfaceVariant),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Batal', style: TextStyle(color: _outline)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: _primary),
+            child: Text('Tambah', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (result != true) return;
+    final url = urlCtrl.text.trim();
+    final title = titleCtrl.text.trim();
+    final artist = artistCtrl.text.trim();
+    if (url.isEmpty || title.isEmpty) return;
+    final ref = await _tracksRefController.future;
+    if (ref == null) return;
+    final uid = _authService.currentUser?.uid ?? '';
+    await ref.push().set({
+      'youtubeUrl': url,
+      'title': title,
+      'artist': artist.isNotEmpty ? artist : 'Unknown',
+      'addedBy': uid,
+      'likes': {uid: false},
+      'timestamp': ServerValue.timestamp,
+    });
+  }
+
+  void _toggleTrackLike(int index) async {
+    final track = _tracks[index];
+    final trackId = track['id']?.toString();
+    if (trackId == null) return;
+    final ref = await _tracksRefController.future;
+    if (ref == null) return;
+    final uid = _authService.currentUser?.uid ?? '';
+    final current = track['likes']?[uid] == true;
+    await ref.child(trackId).child('likes/$uid').set(!current);
+  }
+
+  void _openPlayer(int index) {
+    final trackList = _tracks
+        .map((t) => TrackInfo.fromMap(t))
+        .where((t) => t.youtubeUrl.isNotEmpty)
+        .toList();
+    if (trackList.isEmpty) return;
+    final noteText =
+        _displayNotes.isNotEmpty ? _displayNotes[index % _displayNotes.length]['desc'] ?? '' : '';
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MusicPlayerScreen(
+          tracks: trackList,
+          initialIndex: index.clamp(0, trackList.length - 1),
+          note: noteText,
+        ),
+      ),
+    );
   }
 
   @override
@@ -126,10 +349,8 @@ class _NotesScreenState extends State<NotesScreen> {
             _buildTopBar(),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
-                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 children: [
                   _buildPageHeader(),
                   const SizedBox(height: 32),
@@ -139,7 +360,6 @@ class _NotesScreenState extends State<NotesScreen> {
                 ],
               ),
             ),
-            _buildMiniPlayer(),
           ],
         ),
       ),
@@ -230,99 +450,158 @@ class _NotesScreenState extends State<NotesScreen> {
   }
 
   Widget _buildSharedNotes() {
+    final notes = _displayNotes;
+    final badgeColors = [
+      (_primaryContainer, _onPrimaryContainer, Icons.push_pin_rounded),
+      (_tertiaryContainer, _onPrimaryContainer, Icons.favorite_rounded),
+      (_secondaryContainer, _secondary, Icons.star_rounded),
+    ];
+    final cardBgs = [
+      _surfaceContainerLowest,
+      _tertiaryFixed,
+      _surfaceContainerLowest,
+    ];
+    final rotations = [0.2, -0.1, 0.1];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Shared Notes',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: _onSurface,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Shared Notes',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: _onSurface,
+              ),
+            ),
+            GestureDetector(
+              onTap: _addNote,
+              child: Icon(
+                Icons.add_circle_rounded,
+                color: _primary,
+                size: 28,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 24),
         SizedBox(
           height: 150,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            clipBehavior: Clip.none,
-            itemCount: _notes.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 16),
-            itemBuilder: (context, i) => _buildNoteCard(_notes[i]),
-          ),
+          child: notes.isEmpty
+              ? Center(
+                  child: Text(
+                    'Belum ada note',
+                    style: TextStyle(color: _onSurfaceVariant, fontSize: 14),
+                  ),
+                )
+              : ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  clipBehavior: Clip.none,
+                  itemCount: notes.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 16),
+                  itemBuilder: (context, i) {
+                    final note = notes[i];
+                    final ci = i % badgeColors.length;
+                    return _buildNoteCard(
+                      title: note['title']?.toString() ?? '',
+                      desc: note['description']?.toString() ?? '',
+                      bg: cardBgs[ci],
+                      badgeBg: badgeColors[ci].$1,
+                      badgeIcon: badgeColors[ci].$3,
+                      badgeColor: badgeColors[ci].$2,
+                      rotation: rotations[ci],
+                      onDelete: note['id'] != null
+                          ? () => _deleteNote(note['id'])
+                          : null,
+                    );
+                  },
+                ),
         ),
       ],
     );
   }
 
-  Widget _buildNoteCard(
-    ({String title, String desc, Color bg, Color titleColor, Color descColor, Color badgeBg, IconData badgeIcon, Color badgeColor, double rotation}) note,
-  ) {
-    return Container(
-      width: 240,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: note.bg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _surfaceContainer),
-        boxShadow: _softShadow,
-      ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            top: -12,
-            right: -12,
-            child: Transform.rotate(
-              angle: note.rotation,
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: note.badgeBg,
-                  shape: BoxShape.circle,
-                  boxShadow: const [
-                    BoxShadow(color: Color(0x1F000000), blurRadius: 4),
-                  ],
-                ),
-                child: Icon(
-                  note.badgeIcon,
-                  color: note.badgeColor,
-                  size: 16,
-                ),
-              ),
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                note.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: note.titleColor,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: Text(
-                  note.desc,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14,
-                    height: 1.4,
-                    color: note.descColor,
+  Widget _buildNoteCard({
+    required String title,
+    required String desc,
+    required Color bg,
+    required Color badgeBg,
+    required IconData badgeIcon,
+    required Color badgeColor,
+    required double rotation,
+    VoidCallback? onDelete,
+  }) {
+    return GestureDetector(
+      onLongPress: onDelete,
+      child: Container(
+        width: 240,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _surfaceContainer),
+          boxShadow: _softShadow,
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              top: -12,
+              right: -12,
+              child: Transform.rotate(
+                angle: rotation,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: badgeBg,
+                    shape: BoxShape.circle,
+                    boxShadow: const [
+                      BoxShadow(
+                          color: Color(0x1F000000), blurRadius: 4),
+                    ],
+                  ),
+                  child: Icon(
+                    badgeIcon,
+                    color: badgeColor,
+                    size: 16,
                   ),
                 ),
               ),
-            ],
-          ),
-        ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: _onSurface,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: Text(
+                    desc,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.4,
+                      color: _onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -342,266 +621,103 @@ class _NotesScreenState extends State<NotesScreen> {
                 color: _onSurface,
               ),
             ),
-            TextButton(
-              onPressed: () {},
-              child: Text(
-                'View All',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: _primary,
-                ),
+            GestureDetector(
+              onTap: _addTrack,
+              child: Icon(
+                Icons.add_circle_rounded,
+                color: _primary,
+                size: 28,
               ),
             ),
           ],
         ),
         const SizedBox(height: 16),
-        for (var i = 0; i < _tracks.length; i++) ...[
-          _buildTrackTile(i, _tracks[i]),
-          if (i != _tracks.length - 1) const SizedBox(height: 12),
-        ],
+        if (_tracks.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 32),
+              child: Text(
+                'Belum ada lagu',
+                style: TextStyle(color: _onSurfaceVariant, fontSize: 14),
+              ),
+            ),
+          )
+        else
+          for (var i = 0; i < _tracks.length; i++) ...[
+            _buildTrackTile(i, _tracks[i]),
+            if (i != _tracks.length - 1) const SizedBox(height: 12),
+          ],
       ],
     );
   }
 
-  Widget _buildTrackTile(int index, ({String cover, String title, String artist}) track) {
-    final isPlaying = _playing && index == _playingIndex;
+  Widget _buildTrackTile(int index, Map<String, dynamic> track) {
+    final uid = _authService.currentUser?.uid ?? '';
+    final isLiked = track['likes']?[uid] == true;
+    final title = track['title']?.toString() ?? 'Unknown';
+    final artist = track['artist']?.toString() ?? 'Unknown';
+
     return GestureDetector(
       onTap: () => _openPlayer(index),
       child: Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isPlaying ? _primaryFixed : _surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(12),
-        border: isPlaying
-            ? Border.all(color: _primaryContainer)
-            : Border.all(color: Colors.transparent),
-        boxShadow: _interactiveShadow,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: isPlaying ? _primary : _surfaceContainer,
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.asset(
-                  track.cover,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Icon(
-                    Icons.music_note_rounded,
-                    color: _onSurfaceVariant,
-                    size: 24,
-                  ),
-                ),
-                if (isPlaying)
-                  Container(
-                    color: _primary.withOpacity(0.4),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: _buildEqualizerBars(),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  track.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: isPlaying
-                        ? const Color(0xFF3F030B)
-                        : _onSurface,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  track.artist,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: isPlaying
-                        ? const Color(0xFF792E33)
-                        : _onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            onPressed: () => _toggleLike(index),
-            icon: Icon(
-              _likes[index] == true
-                  ? Icons.favorite_rounded
-                  : Icons.favorite_border_rounded,
-              color: (_likes[index] == true)
-                  ? _primary
-                  : _outline,
-            ),
-          ),
-        ],
-      ),
-      ),
-    );
-  }
-
-  void _openPlayer(int index) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => MusicPlayerScreen(
-          tracks: _tracks,
-          initialIndex: index,
-          note: _notes[index % _notes.length].desc,
-        ),
-      ),
-    );
-  }
-
-  List<Widget> _buildEqualizerBars() {
-    return [
-      _bar(16, 1.0),
-      const SizedBox(width: 2),
-      _bar(8, 0.6),
-      const SizedBox(width: 2),
-      _bar(12, 0.8),
-    ];
-  }
-
-  Widget _bar(double height, double amplitude) {
-    return Container(
-      width: 4,
-      height: height,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(2),
-      ),
-    );
-  }
-
-  Widget _buildMiniPlayer() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-      child: Container(
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: _inverseSurface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(color: Color(0x33000000), blurRadius: 12),
-          ],
+          color: _surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.transparent),
+          boxShadow: _interactiveShadow,
         ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: Row(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: _surfaceContainer,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Icon(
+                Icons.music_note_rounded,
+                color: _onSurfaceVariant,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: _surfaceContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Image.asset(
-                      'assets/images/cover2.jpg',
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Icon(
-                        Icons.music_note_rounded,
-                        color: _onSurfaceVariant,
-                      ),
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: _onSurface,
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Lover',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: _inverseOnSurface,
-                          ),
-                        ),
-                        Text(
-                          'Taylor Swift',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: _inverseOnSurface.withOpacity(0.8),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {},
-                    icon: Icon(
-                      Icons.skip_previous_rounded,
-                      color: _inverseOnSurface,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => setState(() => _playing = !_playing),
-                    child: Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: _inversePrimary,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        _playing
-                            ? Icons.pause_rounded
-                            : Icons.play_arrow_rounded,
-                        color: _onPrimaryContainer,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {},
-                    icon: Icon(
-                      Icons.skip_next_rounded,
-                      color: _inverseOnSurface,
+                  const SizedBox(height: 2),
+                  Text(
+                    artist,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: _onSurfaceVariant,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 1),
-            ClipRRect(
-              child: Stack(
-                children: [
-                  Container(height: 4, color: _surfaceContainer.withOpacity(0.2)),
-                  FractionallySizedBox(
-                    alignment: Alignment.centerLeft,
-                    widthFactor: 1 / 3,
-                    child: Container(height: 4, color: _inversePrimary),
-                  ),
-                ],
+            IconButton(
+              onPressed: () => _toggleTrackLike(index),
+              icon: Icon(
+                isLiked
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                color: isLiked ? _primary : _outline,
               ),
             ),
           ],

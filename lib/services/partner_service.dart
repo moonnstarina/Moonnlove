@@ -206,6 +206,18 @@ class PartnerService {
     return _couplesRef.child(coupleId).child('photos');
   }
 
+  Future<DatabaseReference?> getNotesRef() async {
+    final coupleId = await getCoupleId();
+    if (coupleId == null) return null;
+    return _couplesRef.child(coupleId).child('notes');
+  }
+
+  Future<DatabaseReference?> getTracksRef() async {
+    final coupleId = await getCoupleId();
+    if (coupleId == null) return null;
+    return _couplesRef.child(coupleId).child('tracks');
+  }
+
   Future<String> uploadPhoto(String filePath, {String caption = ''}) async {
     final uid = currentUid;
     if (uid == null) throw Exception('Not logged in');

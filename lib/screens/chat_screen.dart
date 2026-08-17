@@ -40,11 +40,13 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _inputFocused = false;
   DatabaseReference? _chatRef;
   StreamSubscription<DatabaseEvent>? _partnerListener;
+  StreamSubscription<DatabaseEvent>? _userListener;
 
   @override
   void initState() {
     super.initState();
     _loadCouple();
+    _listenForPairingChanges();
     _focusNode.addListener(() {
       if (mounted) {
         setState(() => _inputFocused = _focusNode.hasFocus);
@@ -55,6 +57,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void dispose() {
     _partnerListener?.cancel();
+    _userListener?.cancel();
     _messageController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
@@ -91,6 +94,25 @@ class _ChatScreenState extends State<ChatScreen> {
         });
       });
     }
+  }
+
+  void _listenForPairingChanges() {
+    final uid = _authService.currentUser?.uid;
+    if (uid == null) return;
+    _userListener?.cancel();
+    _userListener = FirebaseDatabase.instance
+        .ref()
+        .child('users/$uid')
+        .onValue
+        .listen((event) {
+      final data = event.snapshot.value;
+      if (data == null || !mounted) return;
+      final map = Map<dynamic, dynamic>.from(data as Map);
+      final coupleId = map['couple_id']?.toString();
+      if (coupleId != null && coupleId.isNotEmpty && coupleId != _coupleId) {
+        _loadCouple();
+      }
+    });
   }
 
   Future<void> _sendMessage() async {

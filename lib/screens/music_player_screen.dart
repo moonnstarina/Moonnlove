@@ -1,10 +1,10 @@
 import '../providers/app_palette.dart';
 import '../providers/theme_provider.dart';
 import 'package:provider/provider.dart';
-import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 Color get _background => AppPalette.background;
 Color get _primary => AppPalette.primary;
@@ -28,10 +28,10 @@ class MusicPlayerScreen extends StatefulWidget {
     super.key,
     required this.tracks,
     this.initialIndex = 0,
-    this.note = 'This song always reminds me of you! ❤️',
+    this.note = 'This song always reminds me of you!',
   });
 
-  final List<({String cover, String title, String artist})> tracks;
+  final List<TrackInfo> tracks;
   final int initialIndex;
   final String note;
 
@@ -41,67 +41,90 @@ class MusicPlayerScreen extends StatefulWidget {
 
 class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   late int _index = widget.initialIndex;
-  late bool _playing = true;
   late bool _liked = false;
-  int _position = 0;
-  Timer? _ticker;
+  final AudioPlayer _player = AudioPlayer();
+  final YoutubeExplode _yt = YoutubeExplode();
+  bool _loading = true;
+  bool _disposed = false;
+  Duration _position = Duration.zero;
+  Duration _duration = Duration.zero;
 
-  static const int _duration = 221;
-
-  ({String cover, String title, String artist}) get _track => widget.tracks[_index];
+  TrackInfo get _track => widget.tracks[_index];
 
   @override
   void initState() {
     super.initState();
-    _startTicker();
+    _player.positionStream.listen((pos) {
+      if (!_disposed && mounted) setState(() => _position = pos);
+    });
+    _player.durationStream.listen((dur) {
+      if (!_disposed && mounted && dur != null) setState(() => _duration = dur);
+    });
+    _player.playerStateStream.listen((state) {
+      if (!_disposed && mounted) {
+        if (state.processingState == ProcessingState.completed) {
+          _next();
+        }
+      }
+    });
+    _loadTrack();
   }
 
   @override
   void dispose() {
-    _ticker?.cancel();
+    _disposed = true;
+    _player.dispose();
+    _yt.close();
     super.dispose();
   }
 
-  void _startTicker() {
-    _ticker?.cancel();
-    if (!_playing) return;
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      setState(() {
-        if (_position < _duration - 1) {
-          _position++;
-        } else {
-          _next();
-        }
-      });
-    });
+  Future<void> _loadTrack() async {
+    if (_index < 0 || _index >= widget.tracks.length) return;
+    setState(() => _loading = true);
+    try {
+      final url = _track.youtubeUrl;
+      if (url.isEmpty) return;
+      final manifest = await _yt.videos.streams.getManifest(Uri.parse(url));
+      final audioStream = manifest.audioOnly.withHighestBitrate();
+      await _player.setUrl(audioStream.url.toString());
+      if (!_disposed && mounted) {
+        setState(() => _loading = false);
+        _player.play();
+      }
+    } catch (_) {
+      if (!_disposed && mounted) setState(() => _loading = false);
+    }
   }
 
   void _togglePlay() {
-    setState(() => _playing = !_playing);
-    _startTicker();
+    if (_player.playing) {
+      _player.pause();
+    } else {
+      _player.play();
+    }
   }
 
   void _toggleLike() => setState(() => _liked = !_liked);
 
-  void _seek(int seconds) => setState(() => _position = max(0, min(_duration, seconds)));
+  void _seek(Duration position) => _player.seek(position);
 
   void _prev() {
-    setState(() {
-      _index = (_index - 1 + widget.tracks.length) % widget.tracks.length;
-      _position = 0;
-    });
+    if (_index > 0) {
+      setState(() => _index--);
+      _loadTrack();
+    }
   }
 
   void _next() {
-    setState(() {
-      _index = (_index + 1) % widget.tracks.length;
-      _position = 0;
-    });
+    if (_index < widget.tracks.length - 1) {
+      setState(() => _index++);
+      _loadTrack();
+    }
   }
 
-  String _fmt(int seconds) {
-    final m = (seconds ~/ 60).toString().padLeft(2, '0');
-    final s = (seconds % 60).toString().padLeft(2, '0');
+  String _fmt(Duration d) {
+    final m = d.inMinutes.toString().padLeft(2, '0');
+    final s = (d.inSeconds % 60).toString().padLeft(2, '0');
     return '$m:$s';
   }
 
@@ -212,21 +235,37 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Image.asset(
-                  _track.cover,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Icon(
-                    Icons.music_note_rounded,
-                    color: _primary,
-                    size: 72,
-                  ),
-                ),
+                _track.coverUrl.isNotEmpty
+                    ? Image.network(
+                        _track.coverUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.music_note_rounded,
+                          color: _primary,
+                          size: 72,
+                        ),
+                      )
+                    : Icon(
+                        Icons.music_note_rounded,
+                        color: _primary,
+                        size: 72,
+                      ),
                 DecoratedBox(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(32),
                     border: Border.all(color: const Color(0x0D000000)),
                   ),
                 ),
+                if (_loading)
+                  Container(
+                    color: Colors.black26,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 3,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -272,6 +311,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   }
 
   Widget _buildScrubber() {
+    final dur = _duration.inSeconds > 0 ? _duration : const Duration(seconds: 1);
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 320),
@@ -283,7 +323,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                 return GestureDetector(
                   onTapDown: (details) {
                     final ratio = (details.localPosition.dx / width).clamp(0.0, 1.0);
-                    _seek((ratio * _duration).round());
+                    _seek(Duration(seconds: (ratio * dur.inSeconds).round()));
                   },
                   child: Container(
                     height: 8,
@@ -294,7 +334,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                     clipBehavior: Clip.antiAlias,
                     child: FractionallySizedBox(
                       alignment: Alignment.centerLeft,
-                      widthFactor: (_position / _duration).clamp(0.0, 1.0),
+                      widthFactor: (_position.inSeconds / dur.inSeconds).clamp(0.0, 1.0),
                       child: Container(
                         decoration: BoxDecoration(color: _primary),
                       ),
@@ -311,19 +351,11 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                 children: [
                   Text(
                     _fmt(_position),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: _outline,
-                    ),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _outline),
                   ),
                   Text(
                     _fmt(_duration),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: _outline,
-                    ),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _outline),
                   ),
                 ],
               ),
@@ -357,7 +389,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
             ),
           ),
           GestureDetector(
-            onTap: _togglePlay,
+            onTap: _loading ? null : _togglePlay,
             child: Container(
               width: 80,
               height: 80,
@@ -372,11 +404,19 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                   ),
                 ],
               ),
-              child: Icon(
-                _playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                size: 40,
-                color: _onPrimary,
-              ),
+              child: _loading
+                  ? Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 3,
+                      ),
+                    )
+                  : Icon(
+                      _player.playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                      size: 40,
+                      color: _onPrimary,
+                    ),
             ),
           ),
           _controlButton(
@@ -387,10 +427,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
               color: _onSurfaceVariant,
             ),
           ),
-          const SizedBox(
-            width: 48,
-            height: 48,
-          ),
+          const SizedBox(width: 48, height: 48),
         ],
       ),
     );
@@ -404,10 +441,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
         width: 48,
         height: 48,
         alignment: Alignment.center,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.transparent,
-        ),
+        decoration: BoxDecoration(shape: BoxShape.circle),
         child: child,
       ),
     );
@@ -478,4 +512,34 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
       ),
     );
   }
+}
+
+class TrackInfo {
+  final String title;
+  final String artist;
+  final String youtubeUrl;
+  final String coverUrl;
+
+  const TrackInfo({
+    required this.title,
+    required this.artist,
+    required this.youtubeUrl,
+    this.coverUrl = '',
+  });
+
+  factory TrackInfo.fromMap(Map<dynamic, dynamic> map) {
+    return TrackInfo(
+      title: map['title']?.toString() ?? 'Unknown',
+      artist: map['artist']?.toString() ?? 'Unknown',
+      youtubeUrl: map['youtubeUrl']?.toString() ?? '',
+      coverUrl: map['coverUrl']?.toString() ?? '',
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'title': title,
+        'artist': artist,
+        'youtubeUrl': youtubeUrl,
+        'coverUrl': coverUrl,
+      };
 }

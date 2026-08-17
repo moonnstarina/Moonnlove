@@ -27,7 +27,7 @@ class _MainShellState extends State<MainShell> {
     HomeScreen(onNavigateToTab: _onNavigate),
     const ChatScreen(),
     const PhotoAlbumScreen(),
-    const GameScreen(),
+    GameScreen(onNavigateToTab: _onNavigate),
     const ProfileScreen(),
   ];
 

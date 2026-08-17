@@ -17,7 +17,6 @@ Color get _onPrimary => AppPalette.onPrimary;
 Color get _onSurface => AppPalette.onSurface;
 Color get _onSurfaceVariant => AppPalette.onSurfaceVariant;
 Color get _surfaceLowest => AppPalette.surfaceLowest;
-Color get _surfaceContainerHigh => AppPalette.surfaceContainerHigh;
 Color get _surfaceContainerLow => AppPalette.surfaceContainerLow;
 Color get _outlineVariant => AppPalette.outlineVariant;
 Color get _secondary => AppPalette.secondary;
@@ -48,7 +47,9 @@ class _GameInfo {
 }
 
 class GameScreen extends StatefulWidget {
-  const GameScreen({super.key});
+  const GameScreen({super.key, this.onNavigateToTab});
+
+  final ValueChanged<int>? onNavigateToTab;
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -417,7 +418,7 @@ class _GameScreenState extends State<GameScreen>
             alignment: Alignment.centerLeft,
             child: GestureDetector(
               onTap: () {
-                if (Navigator.canPop(context)) Navigator.pop(context);
+                widget.onNavigateToTab?.call(0);
               },
               child: Container(
                 width: 40,
@@ -439,35 +440,6 @@ class _GameScreenState extends State<GameScreen>
               fontSize: 20,
               fontWeight: FontWeight.w700,
               color: _onSurface,
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: _surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.emoji_events_rounded,
-                    size: 16,
-                    color: Color(0xFFFBC02D),
-                  ),
-                  SizedBox(width: 4),
-                  Text(
-                    '120',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: _onSurface,
-                    ),
-                  ),
-                ],
-              ),
             ),
           ),
         ],
