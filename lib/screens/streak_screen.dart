@@ -133,7 +133,10 @@ class _StreakScreenState extends State<StreakScreen>
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(
         children: [
-          Icon(Icons.favorite_rounded, color: _primary, size: 24),
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Icon(Icons.arrow_back_rounded, color: _onSurfaceVariant, size: 24),
+          ),
           Expanded(
             child: Center(
               child: Text(

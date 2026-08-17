@@ -235,15 +235,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
-          ClipOval(
-            child: Image.asset(
-              'assets/images/logo.png',
-              width: 40,
-              height: 40,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) =>
-                  const Icon(Icons.person, color: Colors.white),
-            ),
+          Image.asset(
+            'assets/images/logo.png',
+            width: 40,
+            height: 40,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) =>
+                const Icon(Icons.person, color: Colors.white),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -521,32 +519,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget _buildQuickActions(Color primaryColor) {
     final items = [
       _QuickAction(
-        icon: Icons.chat_rounded,
-        label: 'Chat',
-        bg: _primaryContainer.withOpacity(0.2),
-        fg: _primary,
-        tab: 1,
-      ),
-      _QuickAction(
         icon: Icons.local_fire_department_rounded,
         label: 'Streak',
         bg: _tertiaryContainer.withOpacity(0.2),
         fg: _tertiary,
         route: '/streak',
-      ),
-      _QuickAction(
-        icon: Icons.photo_library_rounded,
-        label: 'Past Picture',
-        bg: _secondaryContainer.withOpacity(0.2),
-        fg: _secondary,
-        tab: 2,
-      ),
-      _QuickAction(
-        icon: Icons.videogame_asset_rounded,
-        label: 'Game',
-        bg: _primaryContainer.withOpacity(0.2),
-        fg: _primary,
-        tab: 3,
       ),
       _QuickAction(
         icon: Icons.music_note_rounded,
