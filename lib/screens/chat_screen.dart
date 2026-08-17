@@ -37,6 +37,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   String? _coupleId;
   String? _partnerName;
+  String? _partnerPhotoUrl;
   bool _loading = true;
   bool _inputFocused = false;
   DatabaseReference? _chatRef;
@@ -73,6 +74,7 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       _coupleId = coupleId;
       _partnerName = partnerData?['name'];
+      _partnerPhotoUrl = partnerData?['photo_url']?.toString();
       _chatRef = coupleId != null
           ? FirebaseDatabase.instance
               .ref()
@@ -92,6 +94,7 @@ class _ChatScreenState extends State<ChatScreen> {
         final map = Map<dynamic, dynamic>.from(data as Map);
         setState(() {
           _partnerName = map['name']?.toString() ?? _partnerName;
+          _partnerPhotoUrl = map['photo_url']?.toString() ?? _partnerPhotoUrl;
         });
       });
     }
@@ -401,16 +404,25 @@ class _ChatScreenState extends State<ChatScreen> {
                     Stack(
                       children: [
                         ClipOval(
-                          child: Image.asset(
-                            'assets/images/logo.png',
-                            width: 40,
-                            height: 40,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Icon(
-                              Icons.person,
-                              color: Colors.white,
-                            ),
-                          ),
+                          child: _partnerPhotoUrl != null && _partnerPhotoUrl!.isNotEmpty
+                              ? Image.network(
+                                  _partnerPhotoUrl!,
+                                  width: 40,
+                                  height: 40,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Image.asset(
+                                    'assets/images/logo.png',
+                                    width: 40,
+                                    height: 40,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : Image.asset(
+                                  'assets/images/logo.png',
+                                  width: 40,
+                                  height: 40,
+                                  fit: BoxFit.cover,
+                                ),
                         ),
                         Positioned(
                           bottom: 0,
@@ -871,14 +883,25 @@ class _ChatScreenState extends State<ChatScreen> {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             ClipOval(
-              child: Image.asset(
-                'assets/images/logo.png',
-                width: 32,
-                height: 32,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    const Icon(Icons.person, size: 20, color: Colors.grey),
-              ),
+              child: _partnerPhotoUrl != null && _partnerPhotoUrl!.isNotEmpty
+                  ? Image.network(
+                      _partnerPhotoUrl!,
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Image.asset(
+                        'assets/images/logo.png',
+                        width: 32,
+                        height: 32,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  : Image.asset(
+                      'assets/images/logo.png',
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.cover,
+                    ),
             ),
             const SizedBox(width: 8),
             Flexible(
