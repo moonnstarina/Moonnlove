@@ -197,9 +197,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Container(
                   width: 96,
                   height: 96,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFFDAD9),
-                    shape: BoxShape.circle,
+                  decoration: BoxDecoration(
+                    color: AppPalette.surfaceContainer,
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: Stack(
@@ -541,14 +541,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
-        Container(
+        Image.asset(
+          'assets/images/logo.png',
           width: 192,
           height: 192,
-          decoration: const BoxDecoration(
-            color: Color(0xFFFFDAD9),
-            shape: BoxShape.circle,
-          ),
-          child: ClipOval(child: _buildAvatar()),
+          fit: BoxFit.cover,
         ),
         const SizedBox(height: 16),
         Row(
