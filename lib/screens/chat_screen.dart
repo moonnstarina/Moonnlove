@@ -403,25 +403,27 @@ class _ChatScreenState extends State<ChatScreen> {
                   children: [
                     Stack(
                       children: [
-                        _partnerPhotoUrl != null && _partnerPhotoUrl!.isNotEmpty
-                            ? Image.network(
-                                _partnerPhotoUrl!,
-                                width: 40,
-                                height: 40,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Image.asset(
+                        ClipOval(
+                          child: _partnerPhotoUrl != null && _partnerPhotoUrl!.isNotEmpty
+                              ? Image.network(
+                                  _partnerPhotoUrl!,
+                                  width: 40,
+                                  height: 40,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Image.asset(
+                                    'assets/images/logo.png',
+                                    width: 40,
+                                    height: 40,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : Image.asset(
                                   'assets/images/logo.png',
                                   width: 40,
                                   height: 40,
                                   fit: BoxFit.cover,
                                 ),
-                              )
-                            : Image.asset(
-                                'assets/images/logo.png',
-                                width: 40,
-                                height: 40,
-                                fit: BoxFit.cover,
-                              ),
+                        ),
                         Positioned(
                           bottom: 0,
                           right: 0,
@@ -880,25 +882,27 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            _partnerPhotoUrl != null && _partnerPhotoUrl!.isNotEmpty
-                ? Image.network(
-                    _partnerPhotoUrl!,
-                    width: 32,
-                    height: 32,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Image.asset(
+            ClipOval(
+              child: _partnerPhotoUrl != null && _partnerPhotoUrl!.isNotEmpty
+                  ? Image.network(
+                      _partnerPhotoUrl!,
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Image.asset(
+                        'assets/images/logo.png',
+                        width: 32,
+                        height: 32,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  : Image.asset(
                       'assets/images/logo.png',
                       width: 32,
                       height: 32,
                       fit: BoxFit.cover,
                     ),
-                  )
-                : Image.asset(
-                    'assets/images/logo.png',
-                    width: 32,
-                    height: 32,
-                    fit: BoxFit.cover,
-                  ),
+            ),
             const SizedBox(width: 8),
             Flexible(
               child: Column(
