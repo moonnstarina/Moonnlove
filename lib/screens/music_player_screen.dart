@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 Color get _background => AppPalette.background;
 Color get _primary => AppPalette.primary;
@@ -43,7 +42,6 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   late int _index = widget.initialIndex;
   late bool _liked = false;
   final AudioPlayer _player = AudioPlayer();
-  final YoutubeExplode _yt = YoutubeExplode();
   bool _loading = true;
   bool _disposed = false;
   Duration _position = Duration.zero;
@@ -74,19 +72,27 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   void dispose() {
     _disposed = true;
     _player.dispose();
-    _yt.close();
     super.dispose();
+  }
+
+  static const _proxyBase = 'https://media.momon.qzz.io';
+
+  String? _extractVideoId(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return null;
+    if (uri.host.contains('youtube.com')) return uri.queryParameters['v'];
+    if (uri.host == 'youtu.be') return uri.pathSegments.isNotEmpty ? uri.pathSegments.first : null;
+    return null;
   }
 
   Future<void> _loadTrack() async {
     if (_index < 0 || _index >= widget.tracks.length) return;
     setState(() => _loading = true);
     try {
-      final url = _track.youtubeUrl;
-      if (url.isEmpty) return;
-      final manifest = await _yt.videos.streams.getManifest(Uri.parse(url));
-      final audioStream = manifest.audioOnly.withHighestBitrate();
-      await _player.setUrl(audioStream.url.toString());
+      final videoId = _extractVideoId(_track.youtubeUrl);
+      if (videoId == null) return;
+      final proxyUrl = '$_proxyBase/audio?id=$videoId';
+      await _player.setUrl(proxyUrl);
       if (!_disposed && mounted) {
         setState(() => _loading = false);
         _player.play();
