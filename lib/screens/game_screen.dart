@@ -464,21 +464,9 @@ class _GameScreenState extends State<GameScreen>
             child: Stack(
               fit: StackFit.expand,
               children: [
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [_primaryContainer.withOpacity(0.2), _surfaceLowest],
-                    ),
-                  ),
-                ),
                 Image.asset(
                   'assets/images/logo.png',
                   fit: BoxFit.cover,
-                  opacity: const AlwaysStoppedAnimation(0.9),
-                  color: _primary.withOpacity(0.15),
-                  colorBlendMode: BlendMode.multiply,
                   errorBuilder: (_, __, ___) => const Icon(
                     Icons.sports_esports_rounded,
                     size: 80,
