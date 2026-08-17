@@ -132,7 +132,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1DEDE),
+        color: AppPalette.secondaryFixed,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -167,7 +167,7 @@ class _PartnerScreenState extends State<PartnerScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1DEDE),
+        color: AppPalette.secondaryFixed,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(

@@ -82,12 +82,12 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.7),
+                    color: _surfaceLowest.withOpacity(0.7),
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.white.withOpacity(0.5)),
-                    boxShadow: const [
+                    border: Border.all(color: _surfaceLowest.withOpacity(0.5)),
+                    boxShadow: [
                       BoxShadow(
-                        color: Color(0x0A000000),
+                        color: AppPalette.cardShadow,
                         blurRadius: 30,
                         offset: Offset(0, 8),
                       ),
@@ -105,7 +105,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                       const Divider(
                         height: 1,
                         thickness: 1,
-                        color: Color(0xFFE1E3E4),
+                        color: AppPalette.surfaceVariant,
                       ),
                       _buildToggle(
                         icon: Icons.local_fire_department_rounded,
@@ -117,7 +117,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                       const Divider(
                         height: 1,
                         thickness: 1,
-                        color: Color(0xFFE1E3E4),
+                        color: AppPalette.surfaceVariant,
                       ),
                       _buildToggle(
                         icon: Icons.cake_rounded,
@@ -129,7 +129,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                       const Divider(
                         height: 1,
                         thickness: 1,
-                        color: Color(0xFFE1E3E4),
+                        color: AppPalette.surfaceVariant,
                       ),
                       _buildToggle(
                         icon: Icons.favorite_rounded,
@@ -184,7 +184,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       value: value,
       onChanged: onChanged,
       activeColor: _primary,
-      activeTrackColor: const Color(0xFFFF999C),
+      activeTrackColor: AppPalette.primaryContainer,
     );
   }
 }

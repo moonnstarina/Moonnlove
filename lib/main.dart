@@ -55,6 +55,8 @@ class _Root extends StatelessWidget {
             debugShowCheckedModeBanner: false,
             navigatorKey: appNavigatorKey,
             theme: themeProvider.lightTheme,
+            darkTheme: themeProvider.darkTheme,
+            themeMode: themeProvider.themeMode,
             initialRoute: '/',
             routes: {
               '/': (context) => const AuthGate(),

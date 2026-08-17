@@ -94,7 +94,7 @@ class _StreakScreenState extends State<StreakScreen>
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFFFFF), Color(0xFFFFF5F5)],
+            colors: [AppPalette.gradientStart, AppPalette.gradientEnd],
           ),
         ),
         child: SafeArea(
@@ -169,10 +169,10 @@ class _StreakScreenState extends State<StreakScreen>
             child: Stack(
               alignment: Alignment.center,
               children: [
-                const Icon(
+                Icon(
                   Icons.favorite_rounded,
                   size: 160,
-                  color: Color(0xFFFFB3B4),
+                  color: AppPalette.inversePrimary,
                 ),
                 Text(
                   '$streak',

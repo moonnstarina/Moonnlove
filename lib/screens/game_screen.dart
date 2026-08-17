@@ -461,7 +461,7 @@ class _GameScreenState extends State<GameScreen>
             errorBuilder: (_, __, ___) => const Icon(
               Icons.sports_esports_rounded,
               size: 80,
-              color: Color(0x66FF999C),
+              color: AppPalette.primaryContainer,
             ),
           ),
         ),
@@ -671,7 +671,7 @@ class _GameScreenState extends State<GameScreen>
                   ))
               .toList();
           return AlertDialog(
-            backgroundColor: const Color(0xFFFFFFFF),
+            backgroundColor: _surfaceLowest,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             title: Text(
@@ -834,7 +834,7 @@ class _GameScreenState extends State<GameScreen>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFFFFFFFF),
+        backgroundColor: _surfaceLowest,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(
           'Hapus ${game.title}?',

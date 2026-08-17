@@ -280,8 +280,8 @@ class _PhotoAlbumScreenState extends State<PhotoAlbumScreen> {
       decoration: BoxDecoration(
         color: _surfaceLowest,
         borderRadius: BorderRadius.circular(999),
-        boxShadow: const [
-          BoxShadow(color: Color(0x11000000), blurRadius: 8),
+        boxShadow: [
+          BoxShadow(color: AppPalette.shadow, blurRadius: 8),
         ],
       ),
       child: Row(
@@ -377,11 +377,11 @@ class _PhotoAlbumScreenState extends State<PhotoAlbumScreen> {
                               ),
                             ),
                       errorBuilder: (_, __, ___) => Container(
-                        color: const Color(0xFFFFDAD9),
-                        child: const Icon(
+                        color: AppPalette.primaryFixed,
+                        child: Icon(
                           Icons.photo_rounded,
                           size: 40,
-                          color: Color(0x80964549),
+                          color: _primary.withOpacity(0.5),
                         ),
                       ),
                     ),

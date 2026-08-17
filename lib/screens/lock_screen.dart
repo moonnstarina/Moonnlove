@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../providers/app_palette.dart';
+import '../providers/theme_provider.dart';
 import '../services/app_lock_service.dart';
 
 Color get _background => AppPalette.background;
@@ -63,6 +65,7 @@ class _LockScreenState extends State<LockScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: _background,
       body: SafeArea(

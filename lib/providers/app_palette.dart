@@ -33,8 +33,23 @@ class AppPalette {
   static Color error = const Color(0xFFBA1A1A);
   static Color errorContainer = const Color(0xFFFFDAD6);
 
-  static void update(Color seed) {
-    final s = ColorScheme.fromSeed(seedColor: seed);
+  static bool isDark = false;
+
+  static Color get shadow => isDark ? const Color(0x33000000) : const Color(0x0A000000);
+  static Color get cardShadow => isDark ? const Color(0x44000000) : const Color(0x0A000000);
+  static Color get divider => isDark ? const Color(0x22FFFFFF) : const Color(0x11000000);
+  static Color get shimmer => isDark ? const Color(0x0DFFFFFF) : const Color(0x0D000000);
+  static Color get onlineGreen => const Color(0xFF4CAF50);
+  static Color get offlineGrey => const Color(0xFF9E9E9E);
+  static Color get gradientStart => isDark ? const Color(0xFF1A1A2E) : const Color(0xFFFFFFFF);
+  static Color get gradientEnd => isDark ? const Color(0xFF16213E) : const Color(0xFFFFF5F5);
+  static Color get chipBg => isDark ? const Color(0xFF2A2040) : const Color(0xFFF1DEDE);
+  static Color get inputBg => isDark ? const Color(0xFF1E1E2E) : const Color(0xFFFFFFFF);
+  static Color get overlayBg => isDark ? const Color(0x88000000) : const Color(0x26000000);
+
+  static void update(Color seed, {Brightness brightness = Brightness.light}) {
+    final s = ColorScheme.fromSeed(seedColor: seed, brightness: brightness);
+    isDark = brightness == Brightness.dark;
     background = s.surface;
     primary = s.primary;
     primaryContainer = s.primaryContainer;

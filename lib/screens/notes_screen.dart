@@ -498,9 +498,9 @@ class _NotesScreenState extends State<NotesScreen> {
                   decoration: BoxDecoration(
                     color: badgeBg,
                     shape: BoxShape.circle,
-                    boxShadow: const [
+                    boxShadow: [
                       BoxShadow(
-                          color: Color(0x1F000000), blurRadius: 4),
+                          color: AppPalette.shadow, blurRadius: 4),
                     ],
                   ),
                   child: Icon(

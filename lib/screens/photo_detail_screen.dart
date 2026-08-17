@@ -57,7 +57,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFFFFFFFF),
+        backgroundColor: _surfaceLowest,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(
           'Edit Caption',
@@ -177,7 +177,7 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                   final confirm = await showDialog<bool>(
                     context: context,
                     builder: (ctx) => AlertDialog(
-                      backgroundColor: const Color(0xFFFFFFFF),
+                      backgroundColor: _surfaceLowest,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20)),
                       title: const Text('Hapus foto ini?'),
@@ -249,9 +249,9 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
-              color: Color(0x1F964549),
+              color: _primary.withOpacity(0.12),
               blurRadius: 30,
               offset: Offset(0, 8),
             ),
@@ -276,17 +276,17 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                           ),
                         ),
                   errorBuilder: (_, __, ___) => Container(
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [Color(0xFFFFDAD9), Color(0xFFF9DCDC)],
+                        colors: [AppPalette.primaryFixed, AppPalette.tertiaryFixed],
                       ),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.photo_rounded,
                       size: 80,
-                      color: Color(0x80FFFFFF),
+                      color: AppPalette.onPrimaryContainer.withOpacity(0.5),
                     ),
                   ),
                 ),
@@ -315,8 +315,8 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                       border: Border.all(
                         color: Colors.white.withOpacity(0.3),
                       ),
-                      boxShadow: const [
-                        BoxShadow(color: Color(0x33000000), blurRadius: 8),
+                      boxShadow: [
+                        BoxShadow(color: AppPalette.shadow, blurRadius: 8),
                       ],
                     ),
                     child: Icon(

@@ -213,9 +213,9 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
             decoration: BoxDecoration(
               color: _secondaryFixed,
               borderRadius: BorderRadius.circular(32),
-              boxShadow: const [
+              boxShadow: [
                 BoxShadow(
-                  color: Color(0x1F964549),
+                  color: _primary.withOpacity(0.12),
                   blurRadius: 40,
                   offset: Offset(0, 12),
                 ),
@@ -243,7 +243,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                 DecoratedBox(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(32),
-                    border: Border.all(color: const Color(0x0D000000)),
+                    border: Border.all(color: AppPalette.divider),
                   ),
                 ),
                 if (_loading)
@@ -386,13 +386,13 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
               decoration: BoxDecoration(
                 color: _primary,
                 borderRadius: BorderRadius.circular(24),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x40964549),
-                    blurRadius: 24,
-                    offset: Offset(0, 8),
-                  ),
-                ],
+              boxShadow: [
+                BoxShadow(
+                  color: _primary.withOpacity(0.25),
+                  blurRadius: 24,
+                  offset: Offset(0, 8),
+                ),
+              ],
               ),
               child: _loading
                   ? Padding(
@@ -445,9 +445,9 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
         color: _surfaceContainerLowest,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: _surfaceVariant.withOpacity(0.5)),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x0F964549),
+            color: _primary.withOpacity(0.06),
             blurRadius: 24,
             offset: Offset(0, 4),
           ),

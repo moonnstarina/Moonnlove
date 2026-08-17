@@ -281,11 +281,11 @@ class _LocationScreenState extends State<LocationScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [_primary, Color(0xFFB96B6E)],
+          colors: [_primary, AppPalette.primaryContainer],
         ),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: const [
-          BoxShadow(color: Color(0x40964549), blurRadius: 24, offset: Offset(0, 8)),
+        boxShadow: [
+          BoxShadow(color: _primary.withOpacity(0.25), blurRadius: 24, offset: Offset(0, 8)),
         ],
       ),
       child: Column(
@@ -344,8 +344,8 @@ class _LocationScreenState extends State<LocationScreen> {
       decoration: BoxDecoration(
         color: _surfaceLowest,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(color: Color(0x0F964549), blurRadius: 16, offset: Offset(0, 4)),
+        boxShadow: [
+          BoxShadow(color: _primary.withOpacity(0.06), blurRadius: 16, offset: Offset(0, 4)),
         ],
       ),
       child: Column(

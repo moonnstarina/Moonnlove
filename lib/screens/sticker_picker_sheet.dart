@@ -4,8 +4,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 import '../providers/app_palette.dart';
+import '../providers/theme_provider.dart';
 import '../services/auth_service.dart';
 import '../services/partner_service.dart';
 
@@ -130,6 +132,7 @@ class _StickerPickerSheetState extends State<StickerPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return DraggableScrollableSheet(
       initialChildSize: 0.5,
       minChildSize: 0.3,

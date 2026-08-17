@@ -431,9 +431,9 @@ class _ChatScreenState extends State<ChatScreen> {
                             width: 12,
                             height: 12,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF4CAF50),
+                              color: AppPalette.onlineGreen,
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
+                              border: Border.all(color: _background, width: 2),
                             ),
                           ),
                         ),
@@ -502,12 +502,12 @@ class _ChatScreenState extends State<ChatScreen> {
                 Icon(
                   Icons.chat_bubble_outline,
                   size: 60,
-                  color: Color(0xFF9E9E9E),
+                  color: AppPalette.offlineGrey,
                 ),
                 SizedBox(height: 15),
                 Text(
                   'Mulai ngobrol yuk!',
-                  style: TextStyle(fontSize: 16, color: Color(0xFF9E9E9E)),
+                  style: TextStyle(fontSize: 16, color: AppPalette.offlineGrey),
                 ),
               ],
             ),
@@ -588,9 +588,9 @@ class _ChatScreenState extends State<ChatScreen> {
           decoration: BoxDecoration(
             color: _surfaceContainerHigh,
             borderRadius: BorderRadius.circular(999),
-            boxShadow: const [
+            boxShadow: [
               BoxShadow(
-                color: Color(0x0A000000),
+                color: AppPalette.shadow,
                 blurRadius: 4,
               ),
             ],
@@ -914,7 +914,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: _surfaceLowest,
                       border: Border.all(color: _surfaceVariant),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(16),
@@ -922,9 +922,9 @@ class _ChatScreenState extends State<ChatScreen> {
                         bottomLeft: Radius.circular(4),
                         bottomRight: Radius.circular(16),
                       ),
-                      boxShadow: const [
+                      boxShadow: [
                         BoxShadow(
-                          color: Color(0x05000000),
+                          color: AppPalette.shadow,
                           blurRadius: 10,
                           offset: Offset(0, 2),
                         ),

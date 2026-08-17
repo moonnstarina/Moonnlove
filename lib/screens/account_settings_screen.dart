@@ -1,5 +1,7 @@
 import '../providers/app_palette.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
 import '../services/partner_service.dart';
 
 Color get _primary => AppPalette.primary;
@@ -71,6 +73,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       appBar: AppBar(
         title: Text(

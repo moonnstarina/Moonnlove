@@ -158,7 +158,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       errorBuilder: (_, __, ___) => const Icon(
         Icons.person_rounded,
         size: 90,
-        color: Color(0xFF964549),
+        color: _primary,
       ),
     );
     if (_photoUrl != null && _photoUrl!.isNotEmpty) {
@@ -588,12 +588,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.7),
+        color: _surfaceLowest.withOpacity(0.7),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.5)),
-        boxShadow: const [
+        border: Border.all(color: _surfaceLowest.withOpacity(0.5)),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x0A000000),
+            color: AppPalette.cardShadow,
             blurRadius: 30,
             offset: Offset(0, 8),
           ),
@@ -642,6 +642,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             label: 'Notifikasi',
             onTap: () => Navigator.pushNamed(context, '/notifications'),
           ),
+          _buildDarkModeToggle(),
           _buildMenuTile(
             icon: Icons.language_rounded,
             label: 'Bahasa',
@@ -669,6 +670,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDarkModeToggle() {
+    final themeProvider = context.watch<ThemeProvider>();
+    final isDark = themeProvider.isDark;
+    return InkWell(
+      onTap: () => themeProvider.toggleTheme(),
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: _secondaryContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                color: _primary,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                'Mode Gelap',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: _onSurface,
+                ),
+              ),
+            ),
+            Switch.adaptive(
+              value: isDark,
+              onChanged: (_) => themeProvider.toggleTheme(),
+              activeColor: _primary,
+            ),
+          ],
+        ),
       ),
     );
   }
