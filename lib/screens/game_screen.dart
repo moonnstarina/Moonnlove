@@ -474,7 +474,7 @@ class _GameScreenState extends State<GameScreen>
                   ),
                 ),
                 Image.asset(
-                  'assets/images/game_hero.jpg',
+                  'assets/images/logo.png',
                   fit: BoxFit.cover,
                   opacity: const AlwaysStoppedAnimation(0.9),
                   color: _primary.withOpacity(0.15),

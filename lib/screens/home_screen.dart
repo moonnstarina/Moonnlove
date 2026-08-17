@@ -244,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
             child: ClipOval(
               child: Image.asset(
-                'assets/images/avatar.jpg',
+                    'assets/images/logo.png',
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) =>
                     const Icon(Icons.person, color: Colors.white),
@@ -326,7 +326,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   Widget _buildHeroImage() {
     return Image.asset(
-      'assets/images/hero.jpg',
+      'assets/images/logo.png',
       fit: BoxFit.cover,
       errorBuilder: (_, __, ___) => Icon(
         Icons.favorite,

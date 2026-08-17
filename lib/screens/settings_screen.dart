@@ -153,7 +153,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildAvatar() {
     final fallback = Image.asset(
-      'assets/images/avatar.jpg',
+      'assets/images/logo.png',
       fit: BoxFit.cover,
       errorBuilder: (_, __, ___) => const Icon(
         Icons.person_rounded,
@@ -212,10 +212,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           _photoUrl!,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) =>
-                              Image.asset('assets/images/avatar.jpg'),
+                              Image.asset('assets/images/logo.png'),
                         )
                       else
-                        Image.asset('assets/images/avatar.jpg'),
+                        Image.asset('assets/images/logo.png'),
                       Container(
                         color: Colors.black26,
                         child: const Icon(
