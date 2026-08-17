@@ -187,6 +187,133 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  void _showChatMenu() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _surfaceLowest,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: () async {
+                  Navigator.pop(context);
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: _surfaceLowest,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
+                      title: const Text('Hapus semua chat?'),
+                      content: const Text('Semua pesan akan dihapus permanen.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Batal'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: const Text('Hapus',
+                              style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true) {
+                    await _partnerService.deleteAllMessages();
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: _surfaceLowest,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.delete_sweep_rounded,
+                          color: Colors.red, size: 22),
+                      SizedBox(width: 12),
+                      Text('Hapus semua chat',
+                          style: TextStyle(fontSize: 16)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showMessageOptions(String messageId) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _surfaceLowest,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: () async {
+                  Navigator.pop(context);
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: _surfaceLowest,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
+                      title: const Text('Hapus pesan ini?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Batal'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: const Text('Hapus',
+                              style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true) {
+                    await _partnerService.deleteMessage(messageId);
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: _surfaceLowest,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.delete_rounded, color: Colors.red, size: 22),
+                      SizedBox(width: 12),
+                      Text('Hapus pesan', style: TextStyle(fontSize: 16)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
@@ -310,7 +437,7 @@ class _ChatScreenState extends State<ChatScreen> {
               IconButton(
                 icon: const Icon(Icons.more_vert),
                 color: _onSurfaceVariant,
-                onPressed: _showComingSoon,
+                onPressed: _showChatMenu,
               ),
             ],
           ),
@@ -347,7 +474,9 @@ class _ChatScreenState extends State<ChatScreen> {
         final data = snapshot.data!.snapshot.value as Map;
         final messages = <Map<String, dynamic>>[];
         data.forEach((key, value) {
-          messages.add(Map<String, dynamic>.from(value));
+          final msg = Map<String, dynamic>.from(value);
+          msg['_id'] = key.toString();
+          messages.add(msg);
         });
         messages.sort(
           (a, b) => (b['timestamp'] ?? 0).compareTo(a['timestamp'] ?? 0),
@@ -364,7 +493,11 @@ class _ChatScreenState extends State<ChatScreen> {
             lastDay = day;
           }
           final isMe = msg['sender_uid'] == user?.uid;
-          items.add(_buildMessageBubble(msg, isMe));
+          final msgId = msg['_id']?.toString();
+          items.add(GestureDetector(
+            onLongPress: msgId != null ? () => _showMessageOptions(msgId) : null,
+            child: _buildMessageBubble(msg, isMe),
+          ));
         }
 
         return ListView.builder(

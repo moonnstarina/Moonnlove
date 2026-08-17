@@ -277,17 +277,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ],
             ),
           ),
-          GestureDetector(
-            onTap: _showComingSoon,
-            child: Padding(
-              padding: EdgeInsets.all(4),
-              child: Icon(
-                Icons.notifications_rounded,
-                color: _onSurfaceVariant,
-                size: 26,
-              ),
-            ),
-          ),
         ],
       ),
     );

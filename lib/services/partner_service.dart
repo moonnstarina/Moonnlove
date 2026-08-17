@@ -477,4 +477,22 @@ class PartnerService {
     }
     return null;
   }
+
+  Future<void> deleteAllMessages() async {
+    final coupleId = await getCoupleId();
+    if (coupleId == null) return;
+    await _couplesRef.child(coupleId).child('messages').remove();
+  }
+
+  Future<void> deleteMessage(String messageId) async {
+    final coupleId = await getCoupleId();
+    if (coupleId == null) return;
+    await _couplesRef.child(coupleId).child('messages').child(messageId).remove();
+  }
+
+  Future<void> deletePhoto(String photoId) async {
+    final coupleId = await getCoupleId();
+    if (coupleId == null) return;
+    await _couplesRef.child(coupleId).child('photos').child(photoId).remove();
+  }
 }

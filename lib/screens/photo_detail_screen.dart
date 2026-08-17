@@ -152,8 +152,72 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
             icon: Icons.arrow_back,
             onTap: () => Navigator.pop(context),
           ),
-          _roundButton(icon: Icons.more_vert, onTap: () {}),
+          _roundButton(icon: Icons.more_vert, onTap: _showPhotoMenu),
         ],
+      ),
+    );
+  }
+
+  void _showPhotoMenu() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _surfaceLowest,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: () async {
+                  Navigator.pop(context);
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: const Color(0xFFFFFFFF),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
+                      title: const Text('Hapus foto ini?'),
+                      content: const Text('Foto akan dihapus permanen.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Batal'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: const Text('Hapus',
+                              style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true) {
+                    await _partnerService.deletePhoto(widget.photoId);
+                    if (mounted) Navigator.pop(context);
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: _surfaceLowest,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.delete_rounded, color: Colors.red, size: 22),
+                      SizedBox(width: 12),
+                      Text('Hapus foto', style: TextStyle(fontSize: 16)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
