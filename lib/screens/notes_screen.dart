@@ -679,7 +679,7 @@ class _TrackSearchSheet extends StatefulWidget {
 class _TrackSearchSheetState extends State<_TrackSearchSheet> {
   final _searchCtrl = TextEditingController();
   final _yt = YoutubeExplode();
-  List<SearchResult> _results = [];
+  List<Video> _results = [];
   bool _searching = false;
   bool _disposed = false;
 
@@ -701,7 +701,7 @@ class _TrackSearchSheetState extends State<_TrackSearchSheet> {
       final searchList = await _yt.search.search(query);
       if (!_disposed && mounted) {
         setState(() {
-          _results = searchList.toList();
+          _results = searchList;
           _searching = false;
         });
       }
@@ -710,12 +710,12 @@ class _TrackSearchSheetState extends State<_TrackSearchSheet> {
     }
   }
 
-  void _select(SearchResult r) {
-    final url = 'https://www.youtube.com/watch?v=${r.id}';
+  void _select(Video r) {
+    final videoId = r.id.value;
+    final url = 'https://www.youtube.com/watch?v=$videoId';
     final title = r.title;
     final artist = r.author;
-    final coverUrl =
-        'https://img.youtube.com/vi/${r.id}/mqdefault.jpg';
+    final coverUrl = 'https://img.youtube.com/vi/$videoId/mqdefault.jpg';
     widget.onSelected(title, artist, url, coverUrl);
     Navigator.pop(context);
   }
@@ -816,7 +816,7 @@ class _TrackSearchSheetState extends State<_TrackSearchSheet> {
                         leading: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: Image.network(
-                            'https://img.youtube.com/vi/${r.id}/mqdefault.jpg',
+                            'https://img.youtube.com/vi/${r.id.value}/mqdefault.jpg',
                             width: 56,
                             height: 56,
                             fit: BoxFit.cover,
