@@ -51,7 +51,7 @@ class _Root extends StatelessWidget {
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {
           return MaterialApp(
-            title: 'MoonnLove',
+            title: 'Moonnlove',
             debugShowCheckedModeBanner: false,
             navigatorKey: appNavigatorKey,
             theme: themeProvider.lightTheme,
